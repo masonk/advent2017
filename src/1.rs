@@ -26,13 +26,15 @@ fn main() {
         .collect();
     
     let len = digits.len();
+    let offset : usize = len / 2; // set to "1" for the first part of the problem
     let mut sum = 0;
     for (i, c) in contents.chars().enumerate() {
-        let next_i = (i + 1) % len;
+        let next_i = (i + offset) % len;
         if (digits[i] == digits[next_i]) {
+            // println!("digits[{}] == digits[{}] ({} == {})", i, next_i, digits[i], digits[next_i]);
             sum += digits[i];
         } else {
-            println!("digits[{}] != digits[{}] ({} != {})", i, next_i, digits[i], digits[next_i]);
+            // println!("digits[{}] != digits[{}] ({} != {})", i, next_i, digits[i], digits[next_i]);
         }
     }
     println!("{}", sum);
