@@ -1,9 +1,5 @@
 use std::io::prelude::*;
 use std::fs::File;
-use std::fmt;
-use std::str;
-use std::env;
-use std::path::PathBuf;
 
 fn main() {
     let mut fname = std::env::current_dir()
@@ -24,19 +20,19 @@ fn main() {
         .map(|c| c.to_digit(10)
             .expect("Couldn't parse a digit"))
         .collect();
-    
     let len = digits.len();
-    let offset : usize = len / 2; // set to "1" for the first part of the problem
-    let mut sum = 0;
-    for (i, c) in contents.chars().enumerate() {
-        let next_i = (i + offset) % len;
-        if (digits[i] == digits[next_i]) {
-            // println!("digits[{}] == digits[{}] ({} == {})", i, next_i, digits[i], digits[next_i]);
-            sum += digits[i];
-        } else {
-            // println!("digits[{}] != digits[{}] ({} != {})", i, next_i, digits[i], digits[next_i]);
+    for offset in vec![1 as usize, (len / 2) as usize] {
+        let mut sum = 0;
+        for i in 0..(contents.len()) {
+            let next_i = (i + offset) % len;
+            if digits[i] == digits[next_i] {
+                // println!("digits[{}] == digits[{}] ({} == {})", i, next_i, digits[i], digits[next_i]);
+                sum += digits[i];
+            } else {
+                // println!("digits[{}] != digits[{}] ({} != {})", i, next_i, digits[i], digits[next_i]);
+            }
         }
+        println!("offset {}: {}", offset, sum);
     }
-    println!("{}", sum);
 }
 

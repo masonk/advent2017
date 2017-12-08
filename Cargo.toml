@@ -5,7 +5,7 @@ version = "1.0.0"
 
 [[bin]]
 name = "advent1"
-path = "src/1.rs"
+path = "src/1/1.rs"
 
 [[bin]]
 name = "advent2-1"
@@ -18,6 +18,14 @@ path = "src/2/2.2.rs"
 [[bin]]
 name = "advent3-1"
 path = "src/3/3.1.rs"
+
+[[bin]]
+name = "advent3-2"
+path = "src/3/3.2.rs"
+
+[[bin]]
+name = "advent4-2"
+path = "src/4/4.1.rs"
 
 [dependencies]
 itertools = "0.7.4"

@@ -53,7 +53,7 @@
 // For an address a in a layer l, the Manhattan distance between a and 1 
 // is somewhere between l and 2l. It is l if the address lies in a cardinal 
 // direction from 1, e.g., straight up or straight left, and it is 2l if the
-// address lies on a straight diagonal.
+// address lies on a diagonal.
 
 // Another way of think about this is that the distance is l + x, where x
 // is the number of steps it takes to get to a cardinal direction of layer l.
@@ -73,18 +73,19 @@
 // (clockwise) around the spiral we have to count to get from the largest 
 // possible address in l to the actual address a.
 
-// If we have to count 0 backwards, a == size(layer(a)), meaning it's on the
+// If we have to count 0 backwards, a == maxindex(layer(a)), meaning it's on the
 // lower right diagonal. Then the distance is exactly 2i.
 
 // We want to know how far away an offset is from its closest diagonal. Every
 // jump away from a diagonal is one jump closer to 1.
 
-// Diagonals are at size(a), 3/4 size(a), 1/2size(a), and 1/4size(a)
-// In other words, offsets are offset(a) % size(a)/4 away from a diagonal.
+// The closest_diagonal_offset of a is the number of jumps that a has to make
+// to get to the closest of these diagonal points in the layer of a.
 
 // Therefore:
 
-// manhattan(a) = 2(layer(a)) - offset(a) % size(a) /4
+// manhattan(a) = 2(layer(a)) - closest_diagonal_offset(a)
+
 use std::cmp;
 
 fn layer(a: u64) -> u64 {
@@ -109,6 +110,7 @@ fn closest_diagonal_offset(a: u64) -> u64 {
     }
 
 }
+
 fn manhattan(a: u64) -> u64 {
     if a == 1 {
         0
@@ -117,13 +119,6 @@ fn manhattan(a: u64) -> u64 {
     }
 }
 
-// fn report_manhattan(a: u64) {
-//     println!("layer({}): {}", a, layer(a));
-//     println!("offset({}): {}", a, offset(a));
-//     println!("size({}): {}", layer(a), size(layer(a)));
-//     println!("diag offset({}): {}", a, closest_diagonal_offset(a));
-//     println!("manhattan({}): {}", a, manhattan(a))
-// }
 fn main() {
     println!("manhattan({}): {}", 368078, manhattan(368078));
 }
