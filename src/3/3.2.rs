@@ -21,37 +21,26 @@
 // Your puzzle input is still 368078.
 use std::collections::HashMap;
 
-fn set_number(i : i32, j : i32, values: &mut HashMap<i32, HashMap<i32, u32>>) -> u32 {
+fn set_number(i : i32, j : i32, values: &mut HashMap<(i32, i32), u32>) -> u32 {
     let mut sum = 0;
     for idx in (i-1)..(i+2) {
         for jdx in (j-1)..(j+2) {
-            match values.get(&idx) {
-                Some(col) => {
-                    match col.get(&jdx) {
-                        Some(val) => sum += val,
-                        None => {}
-                    }
-                }
+            match values.get(&(idx, jdx)) {
+                Some(val) => { sum += val }
                 None => {}
             }
         }
     }
-    let col = values.entry(i).or_insert_with(HashMap::new);
-    col.insert(j, sum);
+    values.insert((i, j), sum);
     return sum;
 }
 
 fn main() {
-    // let mut grid = Grid::default();
-
-    // grid.add_layers(4);
-    // println!("{:?}", grid);
     let input = 368078;
     
     let mut values = HashMap::new();
-    let mut inner = HashMap::new();
-    inner.insert(0, 1);
-    values.insert(0, inner);
+    values.insert((0, 0), 1);
+
     let mut i = 0;
     let mut j = 0;
     let mut layer = 0;

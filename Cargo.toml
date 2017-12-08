@@ -27,5 +27,9 @@ path = "src/3/3.2.rs"
 name = "advent4-2"
 path = "src/4/4.1.rs"
 
+[[bin]]
+name = "advent5-2"
+path = "src/5/5.1.rs"
+
 [dependencies]
 itertools = "0.7.4"
