@@ -95,7 +95,6 @@ fn process_instructions(reader: &mut BufRead, ops: &Ops, registers: &mut HashMap
             }
         } else {
             println!("Couldn't decode line {}", line);
-            break;
         }
     }
     max
@@ -112,7 +111,7 @@ fn main () {
     op_map.insert(">", Box::new(|&a, &b| a > b));
     op_map.insert("<", Box::new(|&a, &b| a < b));
 
-
+    
     let input = File::open(fname)
         .expect("Couldn't open file");
     
