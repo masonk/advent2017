@@ -47,6 +47,11 @@ path = "src/8/8.1.rs"
 name = "advent10-1"
 path = "src/10/10.1.rs"
 
+[[bin]]
+name = "advent11-1"
+path = "src/11/11.1.rs"
+
 [dependencies]
 itertools = "0.7.4"
 regex = "0.2"
+lazy_static = "0.1.1"
