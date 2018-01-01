@@ -165,6 +165,7 @@ use std::fs::File;
 use std::io::BufReader;
 use std::io::BufRead;
 use std::collections::HashMap;
+
 #[derive(Debug)]
 struct Scanners {
     max_depth: i32,
@@ -192,6 +193,7 @@ impl Scanners {
         }
         None
     }
+    // Does a packet at depth d collide with a scanner at d that has been running for time t?
     fn collides(&self, d: &i32, t: &i32) -> bool {
         if let Some(r) = self.range(d) {
             // There is a collision iff t % r * 2 - 2 == 0
@@ -222,6 +224,69 @@ fn get_scanners(f: File) -> Scanners {
 
     Scanners { max_range, max_depth, scanners }
 }
+
+/* Advent13-1 the total severity of starting at a given offset */
+fn severity(offset: &i32, scanners: &Scanners) -> i32 {
+    let mut severity = 0;
+    let mut d : i32 = 0;
+    while d <= scanners.max_depth {
+        let scanner_time = d + offset;
+        if let Some(pos) =  scanners.pos(&d, &scanner_time) {
+            if pos == 0 {
+                let r = scanners.range(&d).unwrap();
+                // println!("Hit layer {} and got severity {}", d, r*d);
+                severity += *r * d;
+            }
+        }
+        // debug_print_scanners(&d, &scanner_time, &scanners);
+        d += 1;
+    }
+    severity
+}
+
+/* Advent13-2 does an offset result in detection? */
+fn detected(offset: &i32, scanners: &Scanners) -> bool {
+    let mut d : i32 = 0;
+    while d <= scanners.max_depth {
+        let scanner_time = d + offset;
+        if scanners.collides(&d, &scanner_time) {
+            return true;
+        }
+        d += 1;
+    }
+    false
+}
+
+fn main() {
+    let fname = "src/13/data";
+    // let fname = "src/13/testdata";
+    let f = File::open(fname).expect(&format!("Couldn't open {}", fname));
+    let scanners = get_scanners(f);
+
+    println!("Advent 13-1: severity {} at offset 0.", severity(&0, &scanners));
+
+    let mut offset = 0;
+    while detected(&offset, &scanners) {
+        offset += 1;
+    }
+    println!("Advent 13-2: 0 detections at offset {}.", offset);
+}
+
+
+// /* Advent13-2 the total number of detections starting at a given offset */
+// fn detections(offset: &i32, scanners: &Scanners) -> i32 {
+//     let mut detections = 0;
+//     let mut d : i32 = 0;
+//     while d <= scanners.max_depth {
+//         let scanner_time = d + offset;
+//         if scanners.collides(&d, &scanner_time) {
+//             detections += 1;
+//         }
+//         // debug_print_scanners(&d, &scanner_time, &scanners);
+//         d += 1;
+//     }
+//     detections
+// }
 
 // Print the packet depth and show scanner positions after they've run for t picoseconds
 // fn debug_print_scanners(packet_d: &i32, t: &i32, scanners: &Scanners) {
@@ -262,65 +327,3 @@ fn get_scanners(f: File) -> Scanners {
 //         println!("{}\n", &cells.join(" "));
 //     }
 // }
-
-/* Advent13-1 the total severity of starting at a given offset */
-fn severity(offset: &i32, scanners: &Scanners) -> i32 {
-    let mut severity = 0;
-    let mut d : i32 = 0;
-    while d <= scanners.max_depth {
-        let scanner_time = d + offset;
-        if let Some(pos) =  scanners.pos(&d, &scanner_time) {
-            if pos == 0 {
-                let r = scanners.range(&d).unwrap();
-                // println!("Hit layer {} and got severity {}", d, r*d);
-                severity += *r * d;
-            }
-        }
-        // debug_print_scanners(&d, &scanner_time, &scanners);
-        d += 1;
-    }
-    severity
-}
-
-// /* Advent13-2 the total number of detections starting at a given offset */
-// fn detections(offset: &i32, scanners: &Scanners) -> i32 {
-//     let mut detections = 0;
-//     let mut d : i32 = 0;
-//     while d <= scanners.max_depth {
-//         let scanner_time = d + offset;
-//         if scanners.collides(&d, &scanner_time) {
-//             detections += 1;
-//         }
-//         // debug_print_scanners(&d, &scanner_time, &scanners);
-//         d += 1;
-//     }
-//     detections
-// }
-
-/* Advent13-2 the total number of detections starting at a given offset */
-fn detected(offset: &i32, scanners: &Scanners) -> bool {
-    let mut d : i32 = 0;
-    while d <= scanners.max_depth {
-        let scanner_time = d + offset;
-        if scanners.collides(&d, &scanner_time) {
-            return true;
-        }
-        d += 1;
-    }
-    false
-}
-
-fn main() {
-    let fname = "src/13/data";
-    // let fname = "src/13/testdata";
-    let f = File::open(fname).expect(&format!("Couldn't open {}", fname));
-    let scanners = get_scanners(f);
-    
-    println!("Advent 13-1: severity {} at offset 0.", severity(&0, &scanners));
-
-    let mut offset = 0;
-    while detected(&offset, &scanners) {
-        offset += 1;
-    }
-    println!("Advent 13-2: 0 detections at offset {}.", offset);
-}
