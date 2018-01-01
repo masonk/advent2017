@@ -75,6 +75,10 @@ path = "src/11/11.1.rs"
 name = "advent12-1"
 path = "src/12/12.1.rs"
 
+[[bin]]
+name = "advent13-1"
+path = "src/13/13.1.rs"
+
 [dependencies]
 itertools = "0.7.4"
 regex = "0.2"

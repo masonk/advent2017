@@ -95,7 +95,7 @@ fn main()  {
                 },
                 '<' => { garbage = true; },
                 ',' => {},
-                c @ _ => { panic!(format!("Unparseable char {} sholdn't be here.", c)); }
+                c @ _ => { panic!(format!("Unparseable char '{}' shouldn't be here.", c)); }
             }
         }
     }
