@@ -36,7 +36,15 @@ name = "advent6-1"
 path = "src/6/6.1.rs"
 
 [[bin]]
+name = "advent6-2"
+path = "src/6/6.1.rs"
+
+[[bin]]
 name = "advent7-1"
+path = "src/7/7.1.rs"
+
+[[bin]]
+name = "advent7-2"
 path = "src/7/7.1.rs"
 
 [[bin]]
@@ -44,14 +52,31 @@ name = "advent8-1"
 path = "src/8/8.1.rs"
 
 [[bin]]
+name = "advent8-2"
+path = "src/8/8.1.rs"
+
+[[bin]]
+name = "advent9-1"
+path = "src/9/9.1.rs"
+
+[[bin]]
 name = "advent10-1"
+path = "src/10/10.1.rs"
+
+[[bin]]
+name = "advent10-2"
 path = "src/10/10.1.rs"
 
 [[bin]]
 name = "advent11-1"
 path = "src/11/11.1.rs"
 
+[[bin]]
+name = "advent12-1"
+path = "src/12/12.1.rs"
+
 [dependencies]
 itertools = "0.7.4"
 regex = "0.2"
 lazy_static = "0.1.1"
+petgraph = "0.4.0"
