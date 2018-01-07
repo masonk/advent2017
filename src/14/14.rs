@@ -26,27 +26,75 @@
 // Given your actual key string, how many squares are used?
 
 // Your puzzle input is jxqlasbh.
+extern crate advent2017;
+use advent2017::knot::{Knot};
 
 use std::io::Cursor;
-use Knot;
-fn bits_in_hash(s: &str) {
-    for c in s {
-        c
+/// how many bits in the binary representation of an unsigned integer  
+fn bitcount(i: u32) -> u32 {
+    let mut sum = 0;
+    let mut val = i;
+    for _ in 0..32 {
+        sum += val & 1;
+        val = val >> 1;
     }
+    sum
 }
 
-fn main() {
+/// how many binary bits in a hex number represented as a string
+fn bitcount_line(s: &str) -> u32 {    
     let mut knot = Knot::new();
-    println!("--------------- PART TWO: DENSE HASH --------");
-    for _ in 0..128 {
-        let s = knot.hash(&"jxqlasbh");
+
+    let mut bitsum = 0;
+    let s = knot.hash(Cursor::new(s));
+    for j in 0..(32) {
+        let slice = &s[j..j+1];
+        let num = u32::from_str_radix(slice, 16).unwrap();
+        bitsum += bitcount(num);
     }
+    bitsum
+}
+
+fn count_hash_seed(s: &str) -> u32 {
+    let mut bitsum = 0;
+    for i in 0..128 {
+        let linehash = &format!("{}-{}", s, i);
+        bitsum += bitcount_line(linehash);
+    }
+    bitsum
+}
+
+fn sample() {
+    let test = "flqrgnkx";
+    println!("{}: {}", test, count_hash_seed(&test));
+}
+
+fn part_one() {
+    let input = "jxqlasbh";
+    println!("{}: {}", input, count_hash_seed(&input));
+}
+fn main() {
+    sample();
+    part_one();
 }
 
 #[cfg(test)]
 mod tests {
+    use bitcount;
     #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
+    fn test_bitcount() {
+        assert_eq!(bitcount(0), 0);
+        assert_eq!(bitcount(1), 1);
+        assert_eq!(bitcount(2), 1);
+        assert_eq!(bitcount(3), 2);
+        assert_eq!(bitcount(4), 1);
+        assert_eq!(bitcount(5), 2);
+        assert_eq!(bitcount(6), 2);
+        assert_eq!(bitcount(7), 3);
+        assert_eq!(bitcount(8), 1);
+        assert_eq!(bitcount(65535), 16);
+        assert_eq!(bitcount(65536), 1);
+        assert_eq!(bitcount(4294967295), 32);
     }
+
 }

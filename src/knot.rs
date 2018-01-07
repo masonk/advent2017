@@ -72,7 +72,7 @@ impl fmt::Debug for Knot {
 }
 
 impl Knot {
-    fn new() -> Knot {
+    pub fn new() -> Knot {
         let mut list = Vec::with_capacity(256);
 
         for i in 0..256 {
@@ -114,7 +114,7 @@ impl Knot {
         self.wrap_offset(self.cursor + length - 1) as u32
     }
 
-    fn hash<T: Seek + Read>(&mut self, mut f: T) -> String {
+    pub fn hash<T: Seek + Read>(&mut self, mut f: T) -> String {
         let mut buf = [0 as u8; 1];
         for _ in 0..64 {
             f.seek(SeekFrom::Start(0));
@@ -141,10 +141,10 @@ impl Knot {
         for &byte in dense.iter() {
             write!(&mut s, "{:02X}", byte).unwrap();
         }
-        s
+        s.to_lowercase()
     }
 
-    fn debug(&self, length: u32) {
+    pub fn debug(&self, length: u32) {
         let left = self.cursor;
         let right = self.right(length);
 
