@@ -18,7 +18,6 @@
 //                 [ ]     [ ]
 // Within each layer, a security scanner moves back and forth within its range. Each security scanner starts at the top and moves down until it reaches the bottom, then moves up until it reaches the top, and repeats. A security scanner takes one picosecond to move one step. Drawing scanners as S, the first few picoseconds look like this:
 
-
 // Picosecond 0:
 //  0   1   2   3   4   5   6
 // [S] [S] ... ... [S] ... [S]
@@ -68,7 +67,6 @@
 // [ ]             [ ]     [ ]
 //                 [ ]     [ ]
 
-
 // Picosecond 1:
 //  0   1   2   3   4   5   6
 // [ ] ( ) ... ... [ ] ... [ ]
@@ -81,7 +79,6 @@
 // [ ] [ ]         [ ]     [ ]
 // [S]             [S]     [S]
 //                 [ ]     [ ]
-
 
 // Picosecond 2:
 //  0   1   2   3   4   5   6
@@ -96,7 +93,6 @@
 // [ ]             [ ]     [ ]
 //                 [S]     [S]
 
-
 // Picosecond 3:
 //  0   1   2   3   4   5   6
 // [ ] [ ] ... (.) [ ] ... [ ]
@@ -109,7 +105,6 @@
 // [ ] [ ]         [ ]     [ ]
 // [ ]             [S]     [S]
 //                 [ ]     [ ]
-
 
 // Picosecond 4:
 //  0   1   2   3   4   5   6
@@ -124,7 +119,6 @@
 // [ ]             [ ]     [ ]
 //                 [ ]     [ ]
 
-
 // Picosecond 5:
 //  0   1   2   3   4   5   6
 // [ ] [ ] ... ... [ ] (.) [ ]
@@ -137,7 +131,6 @@
 // [ ] [ ]         [ ]     [ ]
 // [S]             [ ]     [ ]
 //                 [ ]     [ ]
-
 
 // Picosecond 6:
 //  0   1   2   3   4   5   6
@@ -170,13 +163,13 @@ use std::collections::HashMap;
 struct Scanners {
     max_depth: i32,
     max_range: i32,
-    scanners: HashMap<i32, i32>
+    scanners: HashMap<i32, i32>,
 }
 
 impl Scanners {
     // The position of the scanner at depth d after it has run for time t.
     // None if there no scanner at depth d
-    fn pos(&self, d: &i32, t: &i32) -> Option<i32> {  
+    fn pos(&self, d: &i32, t: &i32) -> Option<i32> {
         if let Some(r) = self.range(&d) {
             if *t < 0 {
                 return Some(0);
@@ -186,7 +179,7 @@ impl Scanners {
             let unique_positions = r * 2 - 2; /* how many different states the scanner can be in. Whenever the scanner is at an end, it can only be turning around. Whenever a scanner is in a middle position, it could be going back or forward*/
             let pos = *t % unique_positions;
             if pos < *r {
-                return Some(pos)
+                return Some(pos);
             } else {
                 return Some(mi - (pos % mi));
             }
@@ -218,20 +211,32 @@ fn get_scanners(f: File) -> Scanners {
             .collect::<Vec<i32>>();
 
         scanners.insert(split[0], split[1]);
-        max_depth = if split[0] > max_depth { split[0] } else { max_depth };
-        max_range = if split[1] > max_range { split[1] } else { max_range };
+        max_depth = if split[0] > max_depth {
+            split[0]
+        } else {
+            max_depth
+        };
+        max_range = if split[1] > max_range {
+            split[1]
+        } else {
+            max_range
+        };
     }
 
-    Scanners { max_range, max_depth, scanners }
+    Scanners {
+        max_range,
+        max_depth,
+        scanners,
+    }
 }
 
 /* Advent13-1 the total severity of starting at a given offset */
 fn severity(offset: &i32, scanners: &Scanners) -> i32 {
     let mut severity = 0;
-    let mut d : i32 = 0;
+    let mut d: i32 = 0;
     while d <= scanners.max_depth {
         let scanner_time = d + offset;
-        if let Some(pos) =  scanners.pos(&d, &scanner_time) {
+        if let Some(pos) = scanners.pos(&d, &scanner_time) {
             if pos == 0 {
                 let r = scanners.range(&d).unwrap();
                 // println!("Hit layer {} and got severity {}", d, r*d);
@@ -246,7 +251,7 @@ fn severity(offset: &i32, scanners: &Scanners) -> i32 {
 
 /* Advent13-2 does an offset result in detection? */
 fn detected(offset: &i32, scanners: &Scanners) -> bool {
-    let mut d : i32 = 0;
+    let mut d: i32 = 0;
     while d <= scanners.max_depth {
         let scanner_time = d + offset;
         if scanners.collides(&d, &scanner_time) {
@@ -263,7 +268,10 @@ fn main() {
     let f = File::open(fname).expect(&format!("Couldn't open {}", fname));
     let scanners = get_scanners(f);
 
-    println!("Advent 13-1: severity {} at offset 0.", severity(&0, &scanners));
+    println!(
+        "Advent 13-1: severity {} at offset 0.",
+        severity(&0, &scanners)
+    );
 
     let mut offset = 0;
     while detected(&offset, &scanners) {
@@ -271,7 +279,6 @@ fn main() {
     }
     println!("Advent 13-2: 0 detections at offset {}.", offset);
 }
-
 
 // /* Advent13-2 the total number of detections starting at a given offset */
 // fn detections(offset: &i32, scanners: &Scanners) -> i32 {
@@ -312,12 +319,12 @@ fn main() {
 //                         "[ ]"
 //                     }
 //                 },
-//                 _ => 
+//                 _ =>
 //                     if i == 0 && *packet_d == d  {
 //                         " * "
 //                     }
-//                     else if i == 0 { 
-//                         "..." 
+//                     else if i == 0 {
+//                         "..."
 //                     } else {
 //                         "   "
 //                     }

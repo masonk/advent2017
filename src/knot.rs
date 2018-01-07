@@ -43,15 +43,17 @@
 
 // However, you should instead use the standard list size of 256 (with values 0 to 255) and the sequence of lengths in your puzzle input. Once this process is complete, what is the result of multiplying the first two numbers in the list?
 use std::fmt;
-use std::io::{BufReader, BufRead};
+use std::io::{BufRead, BufReader};
 use std::fs::File;
+use std::io::Seek;
+use std::io::SeekFrom;
 use std::io::Read;
 use std::fmt::Write;
 
-struct Knot {
+pub struct Knot {
     list: Vec<u32>,
     cursor: u32,
-    skip: u32
+    skip: u32,
 }
 
 impl fmt::Debug for Knot {
@@ -60,7 +62,7 @@ impl fmt::Debug for Knot {
         for (i, v) in self.list.iter().enumerate() {
             let s = match i {
                 _ if i as u32 == self.cursor => format!("[{}] ", v),
-                _ => format!("{} ", v)
+                _ => format!("{} ", v),
             };
 
             output.push_str(&s);
@@ -73,11 +75,13 @@ impl Knot {
     fn new() -> Knot {
         let mut list = Vec::with_capacity(256);
 
-        for i in 0..256 { list.push(i) }
+        for i in 0..256 {
+            list.push(i)
+        }
         Knot {
             list,
             cursor: 0,
-            skip: 0
+            skip: 0,
         }
     }
 
@@ -85,7 +89,7 @@ impl Knot {
         let left = self.cursor;
         let right_unmod = left + length - 1;
 
-        let floor : u32 = (length as f32 / 2.0).floor() as u32;
+        let floor: u32 = (length as f32 / 2.0).floor() as u32;
         let list_ptr = &mut self.list as *mut Vec<u32>;
         for i in 0..floor {
             unsafe {
@@ -99,7 +103,7 @@ impl Knot {
         self.cursor = (self.cursor + length + self.skip) % (self.list.len() as u32);
         self.skip += 1;
     }
-    
+
     fn wrap_offset(&self, o: u32) -> usize {
         (o % (self.list.len() as u32)) as usize
     }
@@ -108,6 +112,36 @@ impl Knot {
             return self.cursor;
         }
         self.wrap_offset(self.cursor + length - 1) as u32
+    }
+
+    fn hash<T: Seek + Read>(&mut self, mut f: T) -> String {
+        let mut buf = [0 as u8; 1];
+        for _ in 0..64 {
+            f.seek(SeekFrom::Start(0));
+            while let Ok(n) = f.read(&mut buf) {
+                if n == 0 {
+                    break;
+                }
+                self.next(buf[0] as u32);
+            }
+            for num in [17, 31, 73, 47, 23].iter() {
+                self.next(*num);
+            }
+        }
+        let mut dense = vec![];
+        for o in 0..16 {
+            let offset = o * 16;
+            let mut val: u8 = 0;
+            for i in 0..16 {
+                val = val ^ (self.list[offset + i] as u8);
+            }
+            dense.push(val);
+        }
+        let mut s = String::new();
+        for &byte in dense.iter() {
+            write!(&mut s, "{:02X}", byte).unwrap();
+        }
+        s
     }
 
     fn debug(&self, length: u32) {
@@ -119,8 +153,8 @@ impl Knot {
             let s = match i {
                 _ if i == left && i == right => format!("([{}]) ", v),
                 _ if i == left => format!("([{}] ", v),
-                _ if i  == right => format!("{}) ", v),
-                _ => format!("{} ", v)
+                _ if i == right => format!("{}) ", v),
+                _ => format!("{} ", v),
             };
 
             output.push_str(&s);
@@ -129,38 +163,49 @@ impl Knot {
     }
 }
 
-fn sample () {
+pub fn sample() {
     println!("--------------- SAMPLE ------------");
-    let mut small = Knot { list: vec![0, 1, 2, 3, 4], ..Knot::new() };
-    for i in [3,4,1,5].iter() {
+    let mut small = Knot {
+        list: vec![0, 1, 2, 3, 4],
+        ..Knot::new()
+    };
+    for i in [3, 4, 1, 5].iter() {
         small.debug(*i);
         small.next(*i);
         println!("{:?}", small);
     }
-    println!("{} * {} = {}", small.list[0], small.list[1], small.list[0] * small.list[1]);
+    println!(
+        "{} * {} = {}",
+        small.list[0],
+        small.list[1],
+        small.list[0] * small.list[1]
+    );
 
     println!("--------------- END SAMPLE ------------\n");
 }
 
-fn part_one() {
+pub fn part_one() {
     println!("--------------- PART ONE ------------");
-    let input = File::open("src/10/data")
-        .expect("Couldn't open file");
+    let input = File::open("src/10/data").expect("Couldn't open file");
     let mut reader = BufReader::new(&input);
     let mut knot = Knot::new();
     let mut line = String::new();
-    let inputs = reader
-        .read_line(&mut line);
+    let inputs = reader.read_line(&mut line);
 
     let nums = line.split(",")
         .map(|l| l.parse::<u32>().unwrap())
         .collect::<Vec<u32>>();
-    
+
     for num in nums.iter() {
         knot.next(*num);
     }
-    
-    println!("{} * {} = {}", knot.list[0], knot.list[1], knot.list[0] * knot.list[1]);
+
+    println!(
+        "{} * {} = {}",
+        knot.list[0],
+        knot.list[1],
+        knot.list[0] * knot.list[1]
+    );
     println!("--------------- END PART ONE --------\n");
 }
 
@@ -190,42 +235,12 @@ fn part_one() {
 // 1,2,3 becomes 3efbe78a8d82f29979031a4aa0b16a9d.
 // 1,2,4 becomes 63960835bcdc130f0b66d7ff4f6a5a8e.
 // Treating your puzzle input as a string of ASCII characters, what is the Knot Hash of your puzzle input? Ignore any leading or trailing whitespace you might encounter.
-fn part_two() {
+pub fn part_two() {
+    let mut f = BufReader::new(File::open("src/10/data").expect("Couldn't open file"));
+
     let mut knot = Knot::new();
-    let mut buf = [0 as u8; 1];
     println!("--------------- PART TWO: DENSE HASH --------");
-    for _ in 0..64 {
-        let mut f = File::open("src/10/data")
-            .expect("Couldn't open file");
-        while let Ok(n) = f.read(&mut buf) {
-            if n == 0 { break }
-            knot.next(buf[0] as u32);
-        }
-        for num in [17, 31, 73, 47, 23].iter() {
-            knot.next(*num);
-        }
-    }
-    // println!("{:?}", knot);
-    // println!("--------------- PART TWO: DENSE HASH --------");
-    let mut dense = vec![];
-    for o in 0..16 {
-        let offset = o * 16;
-        let mut val : u8 = 0;
-        for i in 0..16 {
-            val = val ^ (knot.list[offset + i] as u8);
-        }
-        dense.push(val);
-    }
-    let mut s = String::new();
-    for &byte in dense.iter() {
-        write!(&mut s, "{:02X}", byte).unwrap();
-    }
+    let s = knot.hash(&mut f);
     println!("{}", s.to_lowercase());
     println!("--------------- END PART TWO ----------------\n");
-}
-
-fn main() {
-    sample();
-    part_one();
-    part_two();
 }
