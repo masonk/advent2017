@@ -26,31 +26,40 @@
 // Given your actual key string, how many squares are used?
 
 // Your puzzle input is jxqlasbh.
+#![feature(conservative_impl_trait)]
 extern crate advent2017;
 use advent2017::knot::{Knot};
-
 use std::io::Cursor;
-/// how many bits in the binary representation of an unsigned integer  
-fn bitcount(i: u32) -> u32 {
-    let mut sum = 0;
-    let mut val = i;
-    for _ in 0..32 {
-        sum += val & 1;
-        val = val >> 1;
-    }
-    sum
+
+/// Given any Binary, return an iterator that iterates through the binary
+/// representation of the type (msb first), and returns true whenever the bit is set.
+fn num_to_bits<T: std::fmt::Binary>(num: T) -> impl Iterator<Item=bool> {
+    format!("{:b}", num)
+        .chars()
+        .map(|c| c == '1')
+        .collect::<Vec<bool>>()
+        .into_iter()
+} 
+
+/// Given a string representing a hexadecimal number,
+/// where each character of the string is a hexadecimal digit representing 4 binary bits,
+/// return a bitfield of the unsigned binary representation of that number,
+/// msb at index 0
+fn hex_to_bits<'a>(hex: &'a str) -> Vec<bool> {
+    let answer = (0..hex.len())
+        .map(|i| &hex[i..i+1])
+        .map(|slice| u8::from_str_radix(slice, 16).unwrap())
+        .flat_map(|num| num_to_bits(num).skip(4))
+        .collect::<Vec<bool>>();
+    answer
 }
 
-/// how many binary bits in a hex number represented as a string
-fn bitcount_line(s: &str) -> u32 {    
-    let mut knot = Knot::new();
-
+fn bitcount_hash(hash: &str) -> u32 {
     let mut bitsum = 0;
-    let s = knot.hash(Cursor::new(s));
-    for j in 0..(32) {
-        let slice = &s[j..j+1];
+    for j in 0..32 {
+        let slice = &hash[j..j+1];
         let num = u32::from_str_radix(slice, 16).unwrap();
-        bitsum += bitcount(num);
+        bitsum += num.count_ones();
     }
     bitsum
 }
@@ -58,43 +67,59 @@ fn bitcount_line(s: &str) -> u32 {
 fn count_hash_seed(s: &str) -> u32 {
     let mut bitsum = 0;
     for i in 0..128 {
-        let linehash = &format!("{}-{}", s, i);
-        bitsum += bitcount_line(linehash);
+        let plaintext = &format!("{}-{}", s, i);
+        let mut knot = Knot::new();
+        let hash = knot.hash(Cursor::new(plaintext));
+        println!("{} -> {}", plaintext, hash);
+        bitsum += bitcount_hash(&hash);
     }
     bitsum
-}
-
-fn sample() {
-    let test = "flqrgnkx";
-    println!("{}: {}", test, count_hash_seed(&test));
 }
 
 fn part_one() {
     let input = "jxqlasbh";
     println!("{}: {}", input, count_hash_seed(&input));
 }
+
+// --- Part Two ---
+// Now, all the defragmenter needs to know is the number of regions. A region is a group of used squares that are all adjacent, not including diagonals. Every used square is in exactly one region: lone used squares form their own isolated regions, while several adjacent squares all count as a single region.
+
+// In the example above, the following nine regions are visible, each marked with a distinct digit:
+
+// 11.2.3..-->
+// .1.2.3.4   
+// ....5.6.   
+// 7.8.55.9   
+// .88.5...   
+// 88..5..8   
+// .8...8..   
+// 88.8.88.-->
+// |      |   
+// V      V   
+// Of particular interest is the region marked 8; while it does not appear contiguous in this small view, all of the squares marked 8 are connected when considering the whole 128x128 grid. In total, in this example, 1242 regions are present.
+
+// How many regions are present given your key string?
+
+// type Grid = [[u8; 128]; 128];
+
+// fn fill_grid(grid: &mut Grid, hash_seed: &str) {
+//     for i in 0..128 {
+//         let linehash = &format!("{}-{}", s, i);
+//         for (j, val) in bitcount()
+
+//     }
+// }
+
 fn main() {
-    sample();
     part_one();
 }
 
 #[cfg(test)]
 mod tests {
-    use bitcount;
+    use count_hash_seed;
     #[test]
-    fn test_bitcount() {
-        assert_eq!(bitcount(0), 0);
-        assert_eq!(bitcount(1), 1);
-        assert_eq!(bitcount(2), 1);
-        assert_eq!(bitcount(3), 2);
-        assert_eq!(bitcount(4), 1);
-        assert_eq!(bitcount(5), 2);
-        assert_eq!(bitcount(6), 2);
-        assert_eq!(bitcount(7), 3);
-        assert_eq!(bitcount(8), 1);
-        assert_eq!(bitcount(65535), 16);
-        assert_eq!(bitcount(65536), 1);
-        assert_eq!(bitcount(4294967295), 32);
+    fn test_count_hash_seed() {
+        assert_eq!(count_hash_seed("flqrgnkx"), 8108);
     }
 
 }
