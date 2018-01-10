@@ -27,18 +27,20 @@
 
 // Your puzzle input is jxqlasbh.
 #![feature(conservative_impl_trait)]
+#![feature(entry_and_modify)]
+// #![feature(nll)]
 extern crate advent2017;
 use advent2017::knot::{Knot};
 use std::io::Cursor;
-
+use std::collections::HashMap;
+use std::collections::hash_map::Entry::{Occupied, Vacant};
 /// Given any Binary, return an iterator that iterates through the binary
 /// representation of the type (msb first), and returns true whenever the bit is set.
-fn num_to_bits<T: std::fmt::Binary>(num: T) -> impl Iterator<Item=bool> {
-    format!("{:b}", num)
+fn num_to_bits<T: std::fmt::Binary>(num: T) -> Vec<bool> {
+    format!("{:04b}", num)
         .chars()
         .map(|c| c == '1')
         .collect::<Vec<bool>>()
-        .into_iter()
 } 
 
 /// Given a string representing a hexadecimal number,
@@ -46,12 +48,21 @@ fn num_to_bits<T: std::fmt::Binary>(num: T) -> impl Iterator<Item=bool> {
 /// return a bitfield of the unsigned binary representation of that number,
 /// msb at index 0
 fn hex_to_bits<'a>(hex: &'a str) -> Vec<bool> {
-    let answer = (0..hex.len())
+    (0..hex.len())
         .map(|i| &hex[i..i+1])
         .map(|slice| u8::from_str_radix(slice, 16).unwrap())
-        .flat_map(|num| num_to_bits(num).skip(4))
-        .collect::<Vec<bool>>();
-    answer
+        .flat_map(|num| num_to_bits(num))
+        .collect::<Vec<bool>>()
+}
+
+fn hashes(seed: &str) -> Vec<String> {
+    (0..128)
+        .map(|i| format!("{}-{}", seed, i))
+        .map(|plaintext| {
+            let mut knot = Knot::new();
+            knot.hash(Cursor::new(plaintext))
+        })
+        .collect()
 }
 
 fn bitcount_hash(hash: &str) -> u32 {
@@ -66,11 +77,7 @@ fn bitcount_hash(hash: &str) -> u32 {
 
 fn count_hash_seed(s: &str) -> u32 {
     let mut bitsum = 0;
-    for i in 0..128 {
-        let plaintext = &format!("{}-{}", s, i);
-        let mut knot = Knot::new();
-        let hash = knot.hash(Cursor::new(plaintext));
-        println!("{} -> {}", plaintext, hash);
+    for hash in hashes(&s) {
         bitsum += bitcount_hash(&hash);
     }
     bitsum
@@ -100,15 +107,142 @@ fn part_one() {
 
 // How many regions are present given your key string?
 
-// type Grid = [[u8; 128]; 128];
+fn make_grid(hash_seed: &str) -> Vec<Vec<bool>> {
+    let mut grid = Vec::with_capacity(128);
+    for hash in hashes(hash_seed) {
+        grid.push(hex_to_bits(&hash));
+    }
+    grid
+}
 
-// fn fill_grid(grid: &mut Grid, hash_seed: &str) {
-//     for i in 0..128 {
-//         let linehash = &format!("{}-{}", s, i);
-//         for (j, val) in bitcount()
+/// make a single scan through the grid
+// At each position, if the cell is filled, look in each cardinal direction for adjacent clusters
+// If at least one is found, merge this element and all clusters that it is touching into the 
+// cluster with the lowest id that was found. 
+// If none are found, then start a new cluster on this cell.
 
-//     }
-// }
+type ClusterId = i32;
+#[derive(Debug)]
+struct Loc(usize, usize);
+type CGrid = Vec<Vec<CellState>>;
+type CMap = HashMap<ClusterId, Vec<Loc>>;
+
+#[derive(PartialEq, Eq, Debug, Clone)]
+enum CellState {
+    Unclaimed,
+    Empty,
+    Id(ClusterId)
+}
+
+struct Clusters {
+    grid: CGrid,
+    index: CMap,
+    next_id: ClusterId
+}
+
+impl Clusters {
+    fn new() -> Self {
+        let mut grid : Vec<Vec<CellState>> = Vec::new();
+        for _ in 0..128 {
+            let mut row = vec![];
+            for _ in 0..128 {
+                row.push(CellState::Unclaimed); 
+            }
+            grid.push(row);
+        }
+        Clusters { grid, index: HashMap::new(), next_id: 0 }
+    }
+
+    fn print(&self) {
+        for row in self.grid.iter() {
+            println!("{}", row.iter().map(|c| match c {
+                &CellState::Id(id) => format!("{:4}", id),
+                &CellState::Empty => "    .".to_string(),
+                &CellState::Unclaimed => "   ?".to_string()
+            })
+            .collect::<Vec<String>>()
+            .join(" "));
+        }
+    }
+
+    fn add_grid(&mut self, &Loc(i, j): &Loc, id: ClusterId) {
+        self.grid[i][j] = CellState::Id(id);
+    }
+    fn new_cluster(&mut self, loc: Loc) {
+        let id = self.next_id;
+        self.next_id += 1;
+        self.add_to_cluster(loc, id);
+    }
+    fn add_to_cluster(&mut self, loc: Loc, id: ClusterId) {
+        self.add_grid(&loc, id);
+        match self.index.entry(id) {
+            Occupied(mut e) => { e.get_mut().push(loc); }
+            Vacant(e) => { e.insert(vec![loc]); }
+        }
+    }
+    fn state(&self, &Loc(i, j): &Loc) -> CellState {
+        self.grid[i][j].clone()
+    }
+    fn merge_clusters(&mut self, dest: ClusterId, other: &ClusterId) {
+        if dest == *other {
+            return;
+        }
+        if let Some(mut locs) = self.index.remove(&other) {
+            for loc in locs.iter() {
+                self.add_grid(&loc, dest);
+            }
+            self.index.entry(dest)
+                .and_modify(|f| f.append(&mut locs))
+                .or_insert_with(|| locs );
+        }
+    }
+}
+
+fn count_clusters(occupied: &Vec<Vec<bool>>) -> u32 {
+    let mut clusters = Clusters::new();
+    let len = clusters.grid.len();
+    for i in 0..len {
+        let jlen = clusters.grid[i].len();
+        for j in 0..jlen {
+            let val  = clusters.state(&Loc(i, j));
+            if val != CellState::Unclaimed { 
+                panic!("Found a claimed cell in the algo where we shouldn't. Loc({}, {}) == {:?}", i, j, clusters.state(&Loc(i, j)));
+            }
+            if occupied[i][j] {
+                let mut adj_clusters = vec![];
+                for io in [-1, 1].iter() {
+                    let it = (i as i64) + *io;
+                    if it >= 0 && it < len as i64 {
+                        let loc = Loc(it as usize, j);
+                        if let CellState::Id(id) = clusters.state(&loc) {
+                            adj_clusters.push(id);
+                        }
+                    }
+                }
+                for jo in [-1, 1].iter() {
+                    let jt = (j as i64) + *jo;
+                    if jt >= 0  && jt < jlen as i64 {
+                        let loc = Loc(i, jt as usize);
+                        if let CellState::Id(id) = clusters.state(&loc) {
+                            adj_clusters.push(id);
+                        }
+                    }
+                }
+                if adj_clusters.len() > 0 {
+                    let min = adj_clusters.iter().clone().min().unwrap();
+                    for id in adj_clusters.iter() {
+                        clusters.merge_clusters(*min, &id);
+                    }
+                } else {
+                    clusters.new_cluster(Loc(i, j));
+                }
+            }
+        }
+    }
+    clusters.print();
+    // println!("{:?}", clusters.index);
+    clusters.index.keys().len() as u32
+}
 
 fn main() {
     part_one();
@@ -117,9 +251,25 @@ fn main() {
 #[cfg(test)]
 mod tests {
     use count_hash_seed;
+    use hex_to_bits;
+    use count_clusters;
+    use make_grid;
+    #[test]
+    fn test_count_clusters() {
+        assert_eq!(count_clusters(&make_grid("flqrgnkx")), 1242);
+    }
     #[test]
     fn test_count_hash_seed() {
         assert_eq!(count_hash_seed("flqrgnkx"), 8108);
+    }
+    #[test]
+    fn test_hex_to_bits() {
+        for (expected_value, letter) in ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "a", "b", "c", "d", "e", "f"].iter().enumerate() {
+            let actual = hex_to_bits(letter);
+            let actual_binary_string = actual.iter().map(|b| if *b { '1' } else { '0' }).collect::<String>();
+            let actual_value = u8::from_str_radix(&actual_binary_string, 2).unwrap();
+            assert_eq!(actual_value, expected_value as u8);
+        }
     }
 
 }
