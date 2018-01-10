@@ -210,6 +210,15 @@ fn print_small_grid(size: u32, occupied: &Vec<Vec<bool>>) {
         .join(" "));
     }
 }
+/*
+    This algorithm makes one pass through the grid, left to right, top to bottom.
+    At each cell, if the cell is occupied, it checks all neighboring cells for any that 
+    belong to a cluster. Then current cell and all of its cluster neighbors are merged into
+    the lowest-id cluster that it finds.
+
+    If the cell is occupied but has no neighbors that belong to cells, a new cluster is started.
+
+*/
 fn count_clusters(occupied: &Vec<Vec<bool>>) -> u32 {
     let size = 128;
     let mut clusters = Clusters::new(size);
@@ -221,17 +230,16 @@ fn count_clusters(occupied: &Vec<Vec<bool>>) -> u32 {
             let val  = clusters.state(&Loc(i, j));
             if occupied[i][j] {
                 let mut adj_clusters = vec![];
-                for io in [-1, 1].iter() {
-                    let it = (i as i64) + *io;
+                for o in [-1, 1].iter() {
+                    let it = (i as i64) + *o;
+                    let jt = (j as i64) + *o;
+
                     if it >= 0 && it < len as i64 {
                         let loc = Loc(it as usize, j);
                         if let CellState::Id(id) = clusters.state(&loc) {
                             adj_clusters.push(id);
                         }
                     }
-                }
-                for jo in [-1, 1].iter() {
-                    let jt = (j as i64) + *jo;
                     if jt >= 0  && jt < jlen as i64 {
                         let loc = Loc(i, jt as usize);
                         if let CellState::Id(id) = clusters.state(&loc) {
@@ -239,7 +247,7 @@ fn count_clusters(occupied: &Vec<Vec<bool>>) -> u32 {
                         }
                     }
                 }
-                
+
                 if adj_clusters.len() > 0 {
                     let min = adj_clusters.iter().clone().min().unwrap();
                     for id in adj_clusters.iter() {
