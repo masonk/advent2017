@@ -37,8 +37,8 @@ use std::collections::hash_map::Entry::{Occupied, Vacant};
 /// Given any Binary, return an iterator that iterates through the binary
 /// representation of the type (msb first), and returns true whenever the bit is set.
 fn num_to_bits<T: std::fmt::Binary>(num: T) -> Vec<bool> {
-    format!("{:04b}", num)
-        .chars()
+    let s = format!("{:04b}", num);
+    s.chars()
         .map(|c| c == '1')
         .collect::<Vec<bool>>()
 } 
@@ -141,11 +141,11 @@ struct Clusters {
 }
 
 impl Clusters {
-    fn new() -> Self {
+    fn new(size: u32) -> Self {
         let mut grid : Vec<Vec<CellState>> = Vec::new();
-        for _ in 0..128 {
+        for _ in 0..size {
             let mut row = vec![];
-            for _ in 0..128 {
+            for _ in 0..size {
                 row.push(CellState::Unclaimed); 
             }
             grid.push(row);
@@ -153,11 +153,11 @@ impl Clusters {
         Clusters { grid, index: HashMap::new(), next_id: 0 }
     }
 
-    fn print(&self) {
-        for row in self.grid.iter() {
-            println!("{}", row.iter().map(|c| match c {
+    fn print_small(&self, window_size: usize) {
+        for row in self.grid.iter().take(window_size) {
+            println!("\n{}", row.iter().take(window_size).map(|c| match c {
                 &CellState::Id(id) => format!("{:4}", id),
-                &CellState::Empty => "    .".to_string(),
+                &CellState::Empty => "   .".to_string(),
                 &CellState::Unclaimed => "   ?".to_string()
             })
             .collect::<Vec<String>>()
@@ -180,6 +180,9 @@ impl Clusters {
             Vacant(e) => { e.insert(vec![loc]); }
         }
     }
+    fn set_empty(&mut self, Loc(i, j): Loc) {
+        self.grid[i][j] = CellState::Empty;
+    }
     fn state(&self, &Loc(i, j): &Loc) -> CellState {
         self.grid[i][j].clone()
     }
@@ -197,17 +200,25 @@ impl Clusters {
         }
     }
 }
-
+fn print_small_grid(size: u32, occupied: &Vec<Vec<bool>>) {
+    for row in occupied.iter().take(size as usize) {
+        println!("\n{}", row.iter().take(size as usize).map(|c| match c {
+            &true => "#",
+            &false => ".",
+        })
+        .collect::<Vec<&str>>()
+        .join(" "));
+    }
+}
 fn count_clusters(occupied: &Vec<Vec<bool>>) -> u32 {
-    let mut clusters = Clusters::new();
+    let size = 128;
+    let mut clusters = Clusters::new(size);
     let len = clusters.grid.len();
+    // print_small_grid(10, &occupied);
     for i in 0..len {
         let jlen = clusters.grid[i].len();
         for j in 0..jlen {
             let val  = clusters.state(&Loc(i, j));
-            if val != CellState::Unclaimed { 
-                panic!("Found a claimed cell in the algo where we shouldn't. Loc({}, {}) == {:?}", i, j, clusters.state(&Loc(i, j)));
-            }
             if occupied[i][j] {
                 let mut adj_clusters = vec![];
                 for io in [-1, 1].iter() {
@@ -228,24 +239,35 @@ fn count_clusters(occupied: &Vec<Vec<bool>>) -> u32 {
                         }
                     }
                 }
+                
                 if adj_clusters.len() > 0 {
                     let min = adj_clusters.iter().clone().min().unwrap();
                     for id in adj_clusters.iter() {
                         clusters.merge_clusters(*min, &id);
                     }
+                    clusters.add_to_cluster(Loc(i, j), *min);
                 } else {
                     clusters.new_cluster(Loc(i, j));
                 }
             }
+            else {
+                clusters.set_empty(Loc(i, j))
+            }
         }
     }
-    clusters.print();
-    // println!("{:?}", clusters.index);
+    // clusters.print_small(10);
     clusters.index.keys().len() as u32
+}
+
+fn part_two() {
+    let grid = make_grid("jxqlasbh");
+    let count = count_clusters(&grid);
+    println!("14-2: {} clusters in {}", count, "jxqlasbh");
 }
 
 fn main() {
     part_one();
+    part_two();
 }
 
 #[cfg(test)]
@@ -266,7 +288,9 @@ mod tests {
     fn test_hex_to_bits() {
         for (expected_value, letter) in ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "a", "b", "c", "d", "e", "f"].iter().enumerate() {
             let actual = hex_to_bits(letter);
-            let actual_binary_string = actual.iter().map(|b| if *b { '1' } else { '0' }).collect::<String>();
+            let actual_binary_string = actual
+                .iter()
+                .map(|b| if *b { '1' } else { '0' }).collect::<String>();
             let actual_value = u8::from_str_radix(&actual_binary_string, 2).unwrap();
             assert_eq!(actual_value, expected_value as u8);
         }
