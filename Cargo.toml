@@ -92,8 +92,12 @@ path = "src/14/14.rs"
 name = "advent15"
 path = "src/15/15.rs"
 
+[[bin]]
+name = "advent16"
+path = "src/16/16.rs"
+
+
 [dependencies]
 itertools = "0.7.4"
 regex = "0.2"
 lazy_static = "0.1.1"
-petgraph = "0.4.0"
