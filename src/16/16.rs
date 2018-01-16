@@ -20,7 +20,7 @@ enum Move {
     Partner(char, char),
 }
 use Move::*;
-
+use std::fmt;
 extern crate regex;
 use regex::Regex;
 #[macro_use]
@@ -89,7 +89,7 @@ mod test {
 // To have O(1) partner swaps we'll maintain an index of where each partner is, to allow us to retrieve indexes in O(1).
 // Then all operations are O(1).
 //
-#[derive(PartialEq, Eq, Debug)]
+#[derive(PartialEq, Eq)]
 struct DancePosition {
     state: u64,
     index: HashMap<u8, usize>,
@@ -109,6 +109,12 @@ impl DancePosition {
         }
         pos
     }
+    fn chars() -> &'static Vec<char> {
+        lazy_static! {
+            static ref CHARS : Vec<char> = "abcdefghijklmnop".chars().collect::<Vec<char>>();
+        }
+        &CHARS
+    }
     fn get(&self, idx: &usize) -> u8 {
         let shift = 4 + (*idx * 4) as u32;
         let shift_val = self.state.rotate_left(shift);
@@ -116,10 +122,7 @@ impl DancePosition {
         val
     }
     fn val_to_char(val: &u8) -> char {
-        lazy_static! {
-            static ref CHARS : Vec<char> = "abcdefghijklmnop".chars().collect::<Vec<char>>();
-        }
-        CHARS[*val as usize]
+        DancePosition::chars()[*val as usize]
     }
     fn char_to_val(c: &char) -> u8 {
         lazy_static! {
@@ -133,13 +136,17 @@ impl DancePosition {
         }
         *VALS.get(c).unwrap()
     }
-    fn display(&self) -> String {
-        let chars = (0..16)
+    fn cs(&self) -> Vec<char> {
+        (0..16)
             .map(|i| DancePosition::val_to_char(&self.get(&i)))
-            .collect::<String>();
-        chars
+            .collect()
     }
 
+    fn display(&self) -> String {
+        self.cs().iter().collect()
+    }
+
+    /// the value at "idx" to "bits"
     fn set(&mut self, idx: &usize, bits: &u8) {
         let shift = 4 + (*idx * 4) as u32;
         let shift_val = self.state.rotate_left(shift);
@@ -148,6 +155,38 @@ impl DancePosition {
         let unshifted = mask.rotate_right(shift);
         self.state = unshifted;
     }
+
+    fn from_chars(&mut self, chars: &Vec<char>) {
+        for (i, c) in chars.iter().enumerate() {
+            let v = DancePosition::char_to_val(c);
+            self.set(&i, &v);
+            self.index.insert(i as u8, v as usize);
+        }
+    }
+
+    /// a vec containing [idx(a), idx(b), ... , idx(p) ]
+    fn indexes(&self) -> Vec<u8> {
+        (*DancePosition::chars())
+            .iter()
+            .map(|c| DancePosition::char_to_val(c))
+            .map(|v| *self.index.get(&v).unwrap() as u8)
+            .collect::<Vec<u8>>()
+    }
+
+    /// e.g. if indexes is [1, 2, 3, 4, 0]
+    /// then the value at 0 is the previous value at 1
+    /// the value at 2 is the previous value at 1, etc
+    /// the value at 4 is the previous value of 0
+    fn reorder_by_indexes(&mut self, indexes: &Vec<u8>) {
+        let mut rearrangements = vec![];
+        for i in indexes {
+            rearrangements.push(self.get(&(indexes[*i as usize] as usize)));
+        }
+        for (i, v) in rearrangements.iter().enumerate() {
+            self.set(&i, &v);
+        }
+    }
+
     fn apply_all<'a, M: Iterator<Item = &'a Move>>(&mut self, ms: M) {
         for m in ms {
             self.apply(m)
@@ -185,6 +224,31 @@ impl DancePosition {
                 self.set(&a, &y);
             }
         }
+    }
+
+    fn apply_matrix(&mut self, m: &SwapMatrix16) {
+        let old = &self.cs();
+        let new_chars = m.apply_to(&old);
+        self.from_chars(&new_chars);
+    }
+
+    fn apply_index_permutations(&mut self, m: &SwapMatrix16) {
+        let old = self.indexes();
+        let new_indices = m.apply_to(&old);
+        self.reorder_by_indexes(&new_indices);
+    }
+}
+impl fmt::Debug for DancePosition {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let mut indexes = self.index.iter().collect::<Vec<(&u8, &usize)>>();
+        indexes.sort_by_key(|&(&k, &v)| k);
+        let disp = indexes.iter().map(|&(_, &v)| v as u8).collect::<Vec<u8>>();
+        write!(
+            f,
+            "DancePosition {{ \"{}\" (index: {:?}) }}",
+            self.display(),
+            disp
+        )
     }
 }
 
@@ -254,28 +318,17 @@ mod test_dance_positions {
 ///
 /// For part 2, we have to apply the input 1e9 times.
 /// It's slow to run the program that many times.
-/// We can pare it down using math.
-/// Note that
-///     * for any partner operation p_ij = g,
-///     * for any sequence of spins and index swaps f,
-///     * for any initial state x,
-/// we have
-///     g(f(g(x))) = f(x)
 ///
-/// (For all partners x, y, if you swap them, permute the array using spins and index swaps, then swap them again, it's the same result as if they'd never been swapped.)
+/// First decompose the function into two linear maps: the non-partner moves can be reduced to a single
+/// permutation matrix that operates on the input.
 ///
-/// Since we're applying each partner exchange an even number of times, they'll all cancel out and can be completely ignored.
+/// Spins and swaps are easy. The operate independently of the contents of the array - they change indexes move indexes.
 ///
-/// That leaves spins and index swaps, which don't have this nice inverse property and also don't commute.
-/// for example, s1(e0/3(abcd)) = badc but e0/3(s1(abcd)) = dcba
+/// For example, we can directly construct matrix of the linear map that performs the rearrangement
+/// of spins and swaps for any input.
 ///
-/// However, spins and exchanges apply the same effect no matter what partner values are
-/// contained at the index. Therefore, no matter the array that a sequence of spins and and index swaps operates on it, its action
-/// can be expressed using the same linear map.
-///
-/// To prove this we can directly construct the matrix of the linear map that performs the rearrangement.
 /// Take a smaller case of 5 letters - abcde
-/// Suppose we run our input on it and the result is ebdca
+/// Suppose we run our spins and swaps on it and the result is ebdca
 /// There is a unique, bijective, positive, square matrix A that maps abcde -> ebdca
 /// it is:
 /*  
@@ -289,36 +342,45 @@ mod test_dance_positions {
 4| 1  0  0  0  0  |  e       |1a + 0b + 0c + 0d + 0e|     a
 
 */
+/// Partner swaps are the opposite. They don't operate on the values of the array.
+/// They operate on the _indexes of the values_ of the array.
+/// Suppose we run all the partner swaps on "abcde" and get back "ebdca". We now
+/// know something about the indexes of the values of the array are changed
+///
+/*
+    starting index
+    0  1  2  3  4  
+    ________________            
+0| 0  0  0  0  1  |  idx(a)       idx(e)
+1| 0  1  0  0  0  |  idx(b)       idx(b)
+2| 0  0  0  1  0  |  idx(c)    =  idx(d)
+3| 0  0  1  0  0  |  idx(d)       idx(c)
+4| 1  0  0  0  0  |  idx(e)       idx(a)
+*/
 
-/// Since the application of the inputs is a linear map A, the power of linear algebra becomes available.
-/// Repeated applications of the input are just powers of A. In this case we seek A^1e9.
-///
-/// At this point it would be possible to throw this to a linear algebra package and have an efficient solution
-/// automatically derived, but the goal of this project is to solve every problem using only very general tools,
-/// such as the standard library.
-///
-/// The fastest algorithms for this problem rely on the theory of eigenvalues and find exponents of the matrix
-/// by eigendecomposition, which runs in O(r^3), where r is the size of our matrix (16x16). However,
-/// they don't work for all matrices. Our matrix is not provably normal, so it might not be diagonalizable.
-///
-/// One efficient way that works for all sequences of inputs is to use the fact that A^(x + y) = A^x * A^y
-/// to perform efficient exponentiation by squaring. We start with A and multiply it by A to get A^2.
-/// Squaring A^2 gets us to A^4. We can double our exponent every time and we'll have to do 29 multiplications
-/// before we get to the largest power of 2 that is less than 1e9. We can take advantage of the sparsity of the matrix
-/// by representing it as a hash, and this reduces our time complexity to O(r^2 log n)
-///
-/// Then we can get exactly 1e9 by multiplying A raised to various powers of 2.
-/// Which powers of 2 do we need? Exactly the powers of 2 that would be "1"s in a binary representation of the number 1e9.
-/// After all, that's what a binary representation of a number _is_: a sum of powers of 2 that equal the number.
-///
-///
+/// Applying just two permutation functions per iteration gives us a big speedup over applying 1000 ops per iteration
+/// but it's not enough. We only need to do this until we find a cycle. This set of permutations that ends in the
+/// original state is called the orbit of the permutation.
+/// The maximum cycle length of two different permutations over a 16-element permutation group is equivalent
+/// to the lcm of two different partitions of 16. Brute force tells us that these partitions are
+/// 4,5,7 and 3,13. lcm(4,5,7,3,13) = 3 x 4 x 5 x 7 x 13 = 5460.
+/// That's the max cycle length if we get unlucky.
 
 type SparseMatrix = HashMap<u8, u8>;
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 struct SwapMatrix16 {
     // a 16x16 matrix that has a single non-zero entry in each row and column
     entries: SparseMatrix,
 }
+impl fmt::Debug for SwapMatrix16 {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let mut indexes = self.entries.iter().collect::<Vec<(&u8, &u8)>>();
+        indexes.sort_by_key(|&(&k, &v)| k);
+        let disp = indexes.iter().map(|&(_, &v)| v).collect::<Vec<u8>>();
+        write!(f, "Matrix {{ \"{:?}\" }}", disp)
+    }
+}
+
 impl SwapMatrix16 {
     fn identity() -> Self {
         let mut m: SparseMatrix = HashMap::new();
@@ -327,27 +389,22 @@ impl SwapMatrix16 {
         }
         SwapMatrix16 { entries: m }
     }
-    fn multiply_mut(&mut self, b: &SwapMatrix16) {
-        for i in 0..16 {
-            let mid = *self.entries.get(&i).unwrap() as u8;
-            let end = *b.entries.get(&mid).unwrap() as u8;
-            self.entries.insert(i, end);
-        }
-    }
-    fn square(&self) -> SwapMatrix16 {
+    fn build_from<T: PartialEq>(a: &Vec<T>, b: &Vec<T>) -> Self {
+        // find the permutation matrix that maps a to b
         let mut entries: SparseMatrix = HashMap::new();
-        for i in 0..16 {
-            let mid = *self.entries.get(&i).unwrap() as u8;
-            let end = *self.entries.get(&mid).unwrap() as u8;
-
-            entries.insert(i, end);
+        for (i, start) in a.iter().enumerate() {
+            let end = b.iter().position(|v| start == v).unwrap();
+            entries.insert(i as u8, end as u8);
         }
         SwapMatrix16 { entries }
     }
+
     fn set(&mut self, start_idx: u8, end_idx: u8) {
         // tell the matrix to map start_idx to end_idx
         self.entries.insert(start_idx, end_idx);
     }
+
+    /// permute the values of a vector
     fn apply_to<T: Clone>(&self, vec: &Vec<T>) -> Vec<T> {
         // take a vec and build a new vec with the action of the matrix applied
         let mut fin: Vec<T> = Vec::with_capacity(16);
@@ -363,6 +420,28 @@ impl SwapMatrix16 {
     }
 }
 
+/// Get a matrix that performs value permutations equivalent to all spin and index swaps of a move set
+fn get_non_partner_map<'a, I: Iterator<Item = &'a Move>>(moves: I) -> SwapMatrix16 {
+    let mut pos = DancePosition::new();
+    let m = moves.filter(|&m| match m {
+        &Move::Partner(_, _) => false, // partner swaps all cancel,
+        _ => true,
+    });
+    pos.apply_all(m);
+    SwapMatrix16::build_from(DancePosition::chars(), &pos.cs())
+}
+
+/// Get a matrix that performs index permutations equivalent to the partner swaps in moves
+fn get_partner_map<'a, I: Iterator<Item = &'a Move>>(moves: I) -> SwapMatrix16 {
+    let mut pos = DancePosition::new();
+    pos.apply_all(moves.filter(|&m| match m {
+        &Move::Partner(_, _) => true, // partner swaps all cancel,
+        _ => false,
+    }));
+    SwapMatrix16::build_from(&(0..16u8).into_iter().collect::<Vec<u8>>(), &pos.indexes())
+}
+extern crate rand;
+use rand::Rng;
 #[cfg(test)]
 mod test_swap_matrix {
     use SwapMatrix16;
@@ -371,6 +450,10 @@ mod test_swap_matrix {
     use DancePosition;
     use parse_line;
     use Move;
+    use rand::Rng;
+    use rand;
+    use get_non_partner_map;
+    use get_partner_map;
 
     #[test]
     fn identity() {
@@ -379,116 +462,125 @@ mod test_swap_matrix {
         let actual = id.apply_to(&rando);
         assert_eq!(actual, rando);
     }
+
     #[test]
-    fn one_input_app_equals_one_matrix_app() {
-        let f = File::open("src/16/data").unwrap();
-        let mut buf = String::new();
-        BufReader::new(f).read_line(&mut buf).unwrap();
-        let moves = buf.split(",")
-            .map(|v| parse_line(v).unwrap())
-            .collect::<Vec<Move>>();
-
-        let mut pos = DancePosition::new();
-        pos.apply_all(moves.iter().clone());
-        pos.apply_all(moves.iter().clone());
-        let actual = pos.display();
-
-        let mut action_position = DancePosition::new();
-        action_position.apply_all(moves.iter().clone());
-        let mut application_matrix: SwapMatrix16 = SwapMatrix16::identity();
+    fn index_permutations() {
+        let start = DancePosition::new();
+        let mut end = DancePosition::new();
+        end.from_chars(&"abcdmfhijklenop".chars().collect());
+        let matrix = SwapMatrix16::build_from(&start.indexes(), &end.indexes());
+        println!("{:?} \n{:?} \n{:?}", start, end, matrix);
         for i in 0..16 {
-            let end = *pos.index.get(&i).unwrap() as u8;
-            application_matrix.set(i, end);
+            let to = matrix.entries.get(&i).unwrap();
+            if i == 4 {
+                assert_eq!(*to, 12);
+            } else if i == 12 {
+                assert_eq!(*to, 4);
+            } else {
+                assert_eq!(*to, i);
+            }
         }
-        let input = "abcdefghijklmnop".chars().collect::<Vec<char>>();
-        let output = application_matrix.apply_to(&input);
-        let expected = output.iter().collect::<String>();
+    }
 
-        assert_eq!(actual, expected);
+    #[test]
+    fn build_matrix_from_abcd() {
+        let mut rng = rand::thread_rng();
+        for _ in 0..128 {
+            let a = DancePosition::chars();
+            let mut b = a.clone();
+            rng.shuffle(&mut b);
+            let m = SwapMatrix16::build_from(a, &b);
+            assert_eq!(m.apply_to(a), b);
+        }
     }
     #[test]
-    fn four_applications_with_partners_equals_four_applications_without_partners() {
+    fn build_matrix_from_random_points() {
+        let mut rng = rand::thread_rng();
+        for _ in 0..128 {
+            let a = DancePosition::chars();
+            let mut b = a.clone();
+            let mut c = a.clone();
+            rng.shuffle(&mut b);
+            rng.shuffle(&mut c);
+            let m = SwapMatrix16::build_from(&b, &c);
+            assert_eq!(m.apply_to(&b), c);
+        }
+    }
+
+    #[test]
+    fn spin_matrix_same_as_spin_moves() {
         let f = File::open("src/16/data").unwrap();
+
         let mut buf = String::new();
         BufReader::new(f).read_line(&mut buf).unwrap();
         let moves = buf.split(",")
             .map(|v| parse_line(v).unwrap())
             .collect::<Vec<Move>>();
 
-        let mut with = DancePosition::new();
-        let mut without = DancePosition::new();
+        let spin_matrix = get_non_partner_map(moves.iter().clone());
+
+        let mut raw_pos = DancePosition::new();
+        let mut matrix_pos = DancePosition::new();
+
         for _ in 0..4 {
-            with.apply_all(moves.iter().clone());
-            without.apply_all(moves.iter().clone().filter(|&m| match m {
-                &Move::Partner(_, _) => false, // partner swaps all cancel, see discussion.
+            raw_pos.apply_all(moves.iter().clone().filter(|&m| match m {
+                &Move::Partner(_, _) => false,
                 _ => true,
             }));
+            matrix_pos.apply_matrix(&spin_matrix);
+
+            assert_eq!(raw_pos.display(), matrix_pos.display());
         }
-        assert_eq!(with.display(), without.display());
     }
 
     #[test]
-    fn two_input_applications_equals_one_square_matrix_application() {
+    fn partner_matrix_same_as_partner_moves() {
         let f = File::open("src/16/data").unwrap();
+
         let mut buf = String::new();
         BufReader::new(f).read_line(&mut buf).unwrap();
         let moves = buf.split(",")
             .map(|v| parse_line(v).unwrap())
             .collect::<Vec<Move>>();
 
-        let mut pos = DancePosition::new();
-        pos.apply_all(moves.iter().clone());
-        pos.apply_all(moves.iter().clone());
-        let actual = pos.display();
+        let mut raw_pos = DancePosition::new();
+        let mut matrix_pos = DancePosition::new();
+        let partner_matrix = get_partner_map(moves.iter().clone());
 
-        let expected = pos.display();
+        for _ in 0..1 {
+            raw_pos.apply_all(moves.iter().clone().filter(|&m| match m {
+                &Move::Partner(_, _) => true,
+                _ => false,
+            }));
+            matrix_pos.apply_index_permutations(&partner_matrix);
 
-        let mut action_position = DancePosition::new();
-        action_position.apply_all(moves.iter().clone());
-        let mut application_matrix: SwapMatrix16 = SwapMatrix16::identity();
-        for i in 0..16 {
-            let end = *pos.index.get(&i).unwrap() as u8;
-            application_matrix.set(i, end);
+            assert_eq!(raw_pos.display(), matrix_pos.display());
         }
-        let square_application_matrix = application_matrix.square();
-        let input = "abcdefghijklmnop".chars().collect::<Vec<char>>();
-        let output = square_application_matrix.apply_to(&input);
-        let expected = output.iter().collect::<String>();
-
-        assert_eq!(actual, expected);
     }
 
     #[test]
-    fn sixteen_input_applications_equals_one_pow16_matrix_application() {
+    fn matrix_applications_same_as_move_applications() {
         let f = File::open("src/16/data").unwrap();
+
         let mut buf = String::new();
         BufReader::new(f).read_line(&mut buf).unwrap();
         let moves = buf.split(",")
             .map(|v| parse_line(v).unwrap())
             .collect::<Vec<Move>>();
 
-        let mut pos = DancePosition::new();
-        for _ in 0..16 {
-            pos.apply_all(moves.iter().clone());
-        }
-        let actual = pos.display();
+        let spin_matrix = get_non_partner_map(moves.iter().clone());
+        let partner_matrix = get_partner_map(moves.iter().clone());
 
-        let mut action_position = DancePosition::new();
-        action_position.apply_all(moves.iter().clone());
-        let mut application_matrix: SwapMatrix16 = SwapMatrix16::identity();
-        for i in 0..16 {
-            let end = *pos.index.get(&i).unwrap() as u8;
-            application_matrix.set(i, end);
-        }
-        let mut pow16 = application_matrix.clone();
+        let mut raw_pos = DancePosition::new();
+        let mut matrix_pos = DancePosition::new();
+
         for _ in 0..4 {
-            pow16 = pow16.square();
-        }
-        let input = "abcdefghijklmnop".chars().collect::<Vec<char>>();
-        let output = pow16.apply_to(&input);
-        let expected = output.iter().collect::<String>();
+            raw_pos.apply_all(moves.iter());
+            matrix_pos.apply_matrix(&spin_matrix);
+            matrix_pos.apply_index_permutations(&partner_matrix);
 
-        assert_eq!(actual, expected);
+            assert_eq!(raw_pos.display(), matrix_pos.display());
+        }
     }
 }
 
@@ -503,30 +595,6 @@ fn part_2<'a, M: Iterator<Item = &'a Move>>(moves: M) {
         let end = *pos.index.get(&i).unwrap() as u8;
         application_matrix.set(i, end);
     }
-
-    let mut squares: Vec<SwapMatrix16> = vec![];
-    let highest = 1e9_f64.log2().ceil() as u8;
-    squares.push(application_matrix);
-    for i in 1..highest {
-        let next: SwapMatrix16;
-        {
-            next = squares[(i - 1) as usize].square();
-        }
-        squares.push(next);
-    }
-    let binrep = format!("{:b}", 1_000_000_000);
-    let bin = binrep.chars().rev();
-
-    let charmap = "abcdefghijklmnop".chars().collect::<Vec<char>>();
-    let mut bigmap = SwapMatrix16::identity();
-    for (i, dig) in bin.enumerate() {
-        if dig == '1' {
-            bigmap.multiply_mut(&squares[i]);
-        }
-    }
-
-    let answer = bigmap.apply_to(&charmap);
-    println!("{}", answer.into_iter().collect::<String>());
 }
 
 fn part_1<'a, M: Iterator<Item = &'a Move>>(moves: M) {
