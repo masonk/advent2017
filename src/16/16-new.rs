@@ -2,6 +2,7 @@
 #![feature(conservative_impl_trait)]
 use std::io::{BufRead, BufReader, Cursor};
 use std::fs::File;
+use std::fmt;
 use std::collections::HashMap;
 // --- Day 16: Permutation Promenade ---
 // You come upon a very unusual sight; a group of programs here appear to be dancing.
@@ -20,56 +21,58 @@ enum Move {
     Partner(char, char),
 }
 use Move::*;
-use std::fmt;
 extern crate regex;
 use regex::Regex;
 #[macro_use]
 extern crate lazy_static;
 
-fn parse_line(line: &str) -> Option<Move> {
-    lazy_static! {
-        static ref SPIN: Regex = Regex::new(r"s(\d+)").unwrap();
-        static ref EXCHANGE: Regex = Regex::new(r"x(\d+)/(\d+)").unwrap();
-        static ref PARTNER: Regex = Regex::new(r"p(\w)/(\w)").unwrap();
+impl Move {
+    fn parse_line(line: &str) -> Option<Self> {
+        lazy_static! {
+            static ref SPIN: Regex = Regex::new(r"s(\d+)").unwrap();
+            static ref EXCHANGE: Regex = Regex::new(r"x(\d+)/(\d+)").unwrap();
+            static ref PARTNER: Regex = Regex::new(r"p(\w)/(\w)").unwrap();
+        }
+        if let Some(cap) = SPIN.captures(line) {
+            return Some(Spin(
+                str::parse::<usize>(cap.get(1).unwrap().as_str()).unwrap(),
+            ));
+        }
+        if let Some(cap) = EXCHANGE.captures(line) {
+            let a = str::parse::<usize>(cap.get(1).unwrap().as_str()).unwrap();
+            let b = str::parse::<usize>(cap.get(2).unwrap().as_str()).unwrap();
+            return Some(Exchange(a, b));
+        }
+        if let Some(cap) = PARTNER.captures(line) {
+            let a = cap.get(1).unwrap().as_str();
+            let b = cap.get(2).unwrap().as_str();
+            return Some(Partner(
+                a.chars().nth(0).unwrap(),
+                b.chars().nth(0).unwrap(),
+            ));
+        }
+        None
     }
-    if let Some(cap) = SPIN.captures(line) {
-        return Some(Spin(
-            str::parse::<usize>(cap.get(1).unwrap().as_str()).unwrap(),
-        ));
+    fn parse_moves<R: BufRead>(r: R) -> impl Iterator<Item = Self> {
+        let mut buf = String::new();
+        BufReader::new(r).read_line(&mut buf).unwrap();
+        let moves = buf.split(",")
+            .map(|v| Move::parse_line(v).unwrap())
+            .collect::<Vec<Move>>();
+        moves.into_iter()
     }
-    if let Some(cap) = EXCHANGE.captures(line) {
-        let a = str::parse::<usize>(cap.get(1).unwrap().as_str()).unwrap();
-        let b = str::parse::<usize>(cap.get(2).unwrap().as_str()).unwrap();
-        return Some(Exchange(a, b));
-    }
-    if let Some(cap) = PARTNER.captures(line) {
-        let a = cap.get(1).unwrap().as_str();
-        let b = cap.get(2).unwrap().as_str();
-        return Some(Partner(
-            a.chars().nth(0).unwrap(),
-            b.chars().nth(0).unwrap(),
-        ));
-    }
-    None
 }
-fn parse_moves<R: BufRead>(r: R) -> impl Iterator<Item = Move> {
-    r.lines()
-        .map(|v| v.unwrap())
-        .map(|v| parse_line(&v))
-        .filter(|v| v.is_some())
-        .map(|v| v.unwrap())
-}
+
 #[cfg(test)]
 mod test {
     use Move;
     use Move::*;
     use std::io::Cursor;
-    use parse_moves;
     use std::str;
     #[test]
     fn parse_three_moves() {
-        let cursor = Cursor::new(b"s1\nx3/4\r\npe/b");
-        let actual = parse_moves(cursor).collect::<Vec<Move>>();
+        let cursor = Cursor::new(b"s1,x3/4,pe/b");
+        let actual = Move::parse_moves(cursor).collect::<Vec<Move>>();
         let expected = vec![Spin(1), Exchange(3, 4), Partner('e', 'b')];
         assert_eq!(actual, expected);
     }
@@ -80,28 +83,38 @@ mod test {
 // pe/b, swapping programs e and b: baedc.
 // After finishing their dance, the programs end up in order baedc.
 
-// ----
-// there are 2^4 programs, so the whole state can be represented in 2^4 * 4 = 64 bits
-// This is convenient for spinning - there is an LLVM instrinsic for that - but less convenient
-// for swapping and exchanging.
-// We'll impl swap(i, j) which exchanges 4 bits at i with 4 bits at j. This provides O(1) index-based swaps.
-// To have O(1) partner swaps we'll maintain an index of where each partner is, to allow us to retrieve indexes in O(1).
-// Then all operations are O(1).
-//
-
 struct Dance {
-    vals: Vec<char>,
-    scratch: Vec<char>,
+    vals: [char; 16],
+    scratch: [char; 16], // a buffer space so that we needn't allocate every time
 }
 
 impl Dance {
+    fn chars() -> Vec<char> {
+        "abcdefghijklmnop".chars().collect::<Vec<char>>()
+    }
     fn new() -> Self {
-        let vals = "abcdefghijklmnop".chars().collect::<Vec<char>>();
-        let scratch = vec!['a'; 16];
+        let mut vals = ['a'; 16];
+        for (i, c) in "abcdefghijklmnop".chars().enumerate() {
+            vals[i] = c;
+        }
+        let scratch = ['a'; 16];
         Dance { vals, scratch }
     }
     fn to_string(&self) -> String {
         self.vals.iter().collect::<String>()
+    }
+
+    fn t0_index_of(c: &char) -> usize {
+        lazy_static!{
+            static ref INDEX_OF : HashMap<char, usize> = {
+                let mut map = HashMap::new();
+                for (i, c) in Dance::chars().iter().enumerate() {
+                    map.insert(*c, i);
+                }
+                map
+            };
+        }
+        *INDEX_OF.get(c).unwrap()
     }
 
     fn spin(&mut self, x: &usize) {
@@ -117,9 +130,9 @@ impl Dance {
     }
 
     fn exchange(&mut self, i: &usize, j: &usize) {
-        let buf = self.vals[*i];
+        self.scratch[0] = self.vals[*i];
         self.vals[*i] = self.vals[*j];
-        self.vals[*j] = buf;
+        self.vals[*j] = self.scratch[0];
     }
 
     fn exchange_partner(&mut self, a: &char, b: &char) {
@@ -127,11 +140,118 @@ impl Dance {
         let j = self.vals.iter().position(|v| *v == *b).unwrap();
         self.exchange(&i, &j);
     }
+
+    fn apply(&mut self, m: &Move) {
+        match m {
+            &Spin(x) => self.spin(&x),
+            &Exchange(i, j) => self.exchange(&i, &j),
+            &Partner(a, b) => self.exchange_partner(&a, &b),
+        }
+    }
+
+    fn apply_all<M: Iterator<Item = Move>>(&mut self, ms: M) {
+        for m in ms {
+            self.apply(&m);
+        }
+    }
+
+    /// Index permutation is a linear map.
+    /// Suppose Ax = b
+    /// Self is "b" - the vector _after_ permutation
+    /// "x" is assumed to be the intial position, "abcdefghijklmnop"
+    /// This function solves for A
+    fn derive_index_swaps(&self) -> Vec<usize> {
+        let mut vec = vec![0; 16];
+        for (i, c) in self.vals.iter().enumerate() {
+            // suppose the array is "cbadefghijklmnop"
+            // Then 0 swapped to 2, and 2 swapped to zero.
+            // The array should be [2, 1, 0, 3, 4, 5, ... , 15]
+            let start_pos = Dance::t0_index_of(&c);
+            // end position is "i"
+            vec[start_pos] = i;
+        }
+        vec
+    }
+
+    fn apply_index_swaps(&self, swaps: &Vec<usize>) {
+        for (i, j) in swaps.iter().enumerate() {
+            self.scratch[*j] = self.vals[i];
+        }
+        for i in 0..16 {
+            self.vals[i] = self.scratch[i];
+        }
+    }
 }
+
+/// -- Part Two ---
+/// Now that you're starting to get a feel for the dance moves, you turn your attention to the dance as a whole.
+
+/// Keeping the positions they ended up in from their previous dance, the programs perform it again and again: including the first dance, a total of one billion (1000000000) times.
+
+/// In the example above, their second dance would begin with the order baedc, and use the same dance moves:
+
+/// s1, a spin of size 1: cbaed.
+/// x3/4, swapping the last two programs: cbade.
+/// pe/b, swapping programs e and b: ceadb.
+/// In what order are the programs standing after their billion dances?
+///
+/// Discussion:
+///
+/// For part 2, we have to apply the input 1e9 times.
+/// It's slow to run the program that many times.
+///
+/// First decompose the function into two linear maps: the non-partner moves can be reduced to a single
+/// permutation matrix that operates on the input.
+///
+/// Spins and swaps are easy. The operate independently of the contents of the array - they change indexes move indexes.
+///
+/// For example, we can directly construct matrix of the linear map that performs the rearrangement
+/// of spins and swaps for any input.
+///
+/// Take a smaller case of 5 letters - abcde
+/// Suppose we run our spins and swaps on it and the result is ebdca
+/// There is a unique, bijective, positive, square matrix A that maps abcde -> ebdca
+/// it is:
+/*  
+        starting index
+        0  1  2  3  4  
+        ________________            -
+    0| 0  0  0  0  1  |  a       |0a + 0b + 0c + 0d + 1e|     e
+    1| 0  1  0  0  0  |  b       |0a + 1b + 0c + 0d + 0e|     b
+    2| 0  0  0  1  0  |  c    =  |0a + 0b + 0c + 1d + 0e|  =  d
+    3| 0  0  1  0  0  |  d       |0a + 0b + 1c + 0d + 0e|     c
+    4| 1  0  0  0  0  |  e       |1a + 0b + 0c + 0d + 0e|     a
+
+    */
+/// Partner swaps are the opposite. They don't operate on the values of the array.
+/// They operate on the _indexes of the values_ of the array.
+/// Suppose we run all the partner swaps on "abcde" and get back "ebdca". We now
+/// know something about the indexes of the values of the array are changed
+///
+/*
+        starting index
+        0  1  2  3  4  
+        ________________            
+    0| 0  0  0  0  1  |  idx(a)       idx(e)
+    1| 0  1  0  0  0  |  idx(b)       idx(b)
+    2| 0  0  0  1  0  |  idx(c)    =  idx(d)
+    3| 0  0  1  0  0  |  idx(d)       idx(c)
+    4| 1  0  0  0  0  |  idx(e)       idx(a)
+    */
+
+/// Applying just two permutation functions per iteration gives us a big speedup over applying 1000 ops per iteration
+/// but it's not enough. We only need to do this until we find a cycle. This set of permutations that ends in the
+/// original state is called the orbit of the permutation.
+/// The maximum cycle length of two different permutations over a 16-element permutation group is equivalent
+/// to the lcm of two different partitions of 16. Brute force tells us that these partitions are
+/// 4,5,7 and 3,13. lcm(4,5,7,3,13) = 3 x 4 x 5 x 7 x 13 = 5460.
+/// That's the max cycle length if we get unlucky.
+///
 
 #[cfg(test)]
 mod dance_test {
     use Dance;
+    use Move;
     #[test]
     fn spin() {
         let mut dance = Dance::new();
@@ -179,4 +299,32 @@ mod dance_test {
         assert_eq!(&dance.to_string(), "abcdefghijklmnop");
     }
 
+    #[test]
+    fn derive_index_swaps() {
+        let mut direct_application = Dance::new();
+        let moves = vec![
+            Move::Spin(4),
+            Move::Exchange(3, 15),
+            Move::Exchange(1, 5),
+            Move::Exchange(3, 1),
+            Move::Spin(3),
+        ];
+        let iter = moves.into_iter();
+        let () = iter;
+        direct_application.apply_all(&iter);
+
+        let index_swaps = direct_application.derive_index_swaps();
+        let mut matrix_application = Dance::new();
+        matrix_application.apply_index_swaps(&index_swaps);
+        assert_eq!(
+            matrix_application.to_string(),
+            direct_application.to_string()
+        );
+    }
+
+}
+
+fn part_one() {
+    let f = File::open("src/16/data").unwrap();
+    let moves = Move::parse_moves(BufReader::new(f));
 }

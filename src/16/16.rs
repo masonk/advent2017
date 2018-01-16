@@ -160,7 +160,7 @@ impl DancePosition {
         for (i, c) in chars.iter().enumerate() {
             let v = DancePosition::char_to_val(c);
             self.set(&i, &v);
-            self.index.insert(i as u8, v as usize);
+            self.index.insert(i as u8, v as);
         }
     }
 
