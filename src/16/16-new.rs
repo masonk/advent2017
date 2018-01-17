@@ -173,6 +173,43 @@ impl Dance {
         vec
     }
 
+    fn derive_value_swaps(&self) -> Vec<char> {
+        let mut vec = vec!['a'; 16];
+        let chars = Dance::chars();
+        for (i, c) in chars.iter().enumerate() {
+            // Where did each char end up?
+            let end_idx = self.vals.iter().position(|&v| v == *c).unwrap();
+            // what char was there before?
+            let swapped_char = chars[end_idx];
+            vec[i] = swapped_char;
+        }
+
+        // suppose the swaps are
+        // a <-> c
+        // c <-> e
+        // This means a ends where c started,
+        // c ends wherever e started,
+        // and e ends wherever a started.
+        // End position would be
+        // [c b e d a ...]
+        //
+        // Our swaps would be
+        //  a b c d e  <- start position
+        // [e b a d c]
+        // That is, a goes where e was
+        // b goes where b was
+        // c goes where a was,
+        // d goes where d was
+        // e goes where c was
+
+        // Suppose swaps are
+        // c - e
+        // a -c
+        // Then end positon would be
+        // [c b e d a]
+        vec
+    }
+
     fn apply_index_swaps(&mut self, swaps: &Vec<usize>) {
         for (i, j) in swaps.iter().enumerate() {
             self.scratch[*j] = self.vals[i];
@@ -182,7 +219,15 @@ impl Dance {
         }
     }
 
-    fn derive_value_swaps(&self) {}
+    fn apply_value_swaps(&mut self, swaps: &Vec<char>) {
+        for (i, c) in swaps.iter().enumerate() {
+            let j = self.vals.iter().position(|v| v == c).unwrap();
+            self.scratch[j] = self.vals[i];
+        }
+        for i in 0..16 {
+            self.vals[i] = self.scratch[i];
+        }
+    }
 }
 
 /// -- Part Two ---
@@ -323,6 +368,30 @@ mod dance_test {
         );
     }
 
+    #[test]
+    fn derive_value_swaps() {
+        let mut direct_application = Dance::new();
+        let moves = vec![
+            Move::Partner('b', 'd'),
+            Move::Partner('c', 'p'),
+            Move::Partner('b', 'f'),
+            Move::Partner('c', 'b'),
+        ];
+
+        direct_application.apply_all(moves.iter());
+        let value_swaps = direct_application.derive_value_swaps();
+        println!(
+            "Direct application: {}\nValue Swaps: {}",
+            direct_application.to_string(),
+            value_swaps.iter().collect::<String>()
+        );
+        let mut matrix_application = Dance::new();
+        matrix_application.apply_value_swaps(&value_swaps);
+        assert_eq!(
+            matrix_application.to_string(),
+            direct_application.to_string()
+        );
+    }
 }
 
 fn part_one() {
