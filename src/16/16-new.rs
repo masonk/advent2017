@@ -454,20 +454,17 @@ mod dance_test {
     }
 
     #[test]
-    fn ten_direct_applications_same_as_10_matrix() {
+    fn multiple_applications_equivalent() {
         let (index_swaps, value_swaps) = get_swaps();
         let f = File::open("src/16/data").unwrap();
         let moves = Move::parse_moves(BufReader::new(f)).collect::<Vec<Move>>();
 
         let mut dance = Dance::new();
         let mut direct_dance = Dance::new();
-        for _ in 0..10 {
+        for _ in 0..50 {
             dance.apply_value_swaps(&value_swaps);
-            direct_dance.apply_all(moves.iter());
-        }
-
-        for _ in 0..10 {
             dance.apply_index_swaps(&index_swaps);
+            direct_dance.apply_all(moves.iter());
         }
 
         assert_eq!(dance.to_string(), direct_dance.to_string());
@@ -492,6 +489,7 @@ fn get_swaps() -> (Vec<usize>, Vec<char>) {
     let value_swaps = partner_dance.derive_value_swaps();
     (index_swaps, value_swaps)
 }
+
 fn part_one() -> String {
     let (index_swaps, value_swaps) = get_swaps();
     let mut dance = Dance::new();
@@ -502,36 +500,26 @@ fn part_one() -> String {
 }
 
 fn part_two() -> String {
-    let mut memo: HashMap<String, usize> = HashMap::new();
-    let mut cycle: Vec<String> = vec![];
     let (index_swaps, value_swaps) = get_swaps();
     let mut dance = Dance::new();
-    let mut i = 0;
+
+    dance.apply_value_swaps(&value_swaps);
+    dance.apply_index_swaps(&index_swaps);
+    let mut cycle: Vec<String> = vec![dance.to_string()];
+
     loop {
         dance.apply_value_swaps(&value_swaps);
         dance.apply_index_swaps(&index_swaps);
-        let s = dance.to_string();
-
-        {
-            let exists = memo.get(&s);
-            match exists {
-                Some(i) => {
-                    for (i, c) in cycle.iter().enumerate() {
-                        println!("{}. {}", i, c);
-                    }
-                    println!("Got {}, which exists at cycle index {}", s, i);
-                    let cycle_len = cycle.len() - i;
-                    let cycle_offset = 1e9 as usize % cycle_len;
-                    let final_position = i + cycle_offset;
-                    return cycle[final_position].clone();
-                }
-                _ => {}
+        let d = dance.to_string();
+        if d == cycle[0] {
+            for (i, c) in cycle.iter().enumerate() {
+                println!("{}. {}", i, c);
             }
+            let idx = 1e9 as usize % cycle.len();
+            println!("idx {}, len {}", idx, cycle.len());
+            return cycle[idx].clone();
         }
-
-        memo.insert(s.clone(), i);
-        cycle.push(s.clone());
-        i += 1;
+        cycle.push(dance.to_string());
     }
 }
 fn main() {
