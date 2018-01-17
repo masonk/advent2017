@@ -149,7 +149,7 @@ impl Dance {
         }
     }
 
-    fn apply_all<M: Iterator<Item = Move>>(&mut self, ms: M) {
+    fn apply_all<'a, M: Iterator<Item = &'a Move>>(&mut self, ms: M) {
         for m in ms {
             self.apply(&m);
         }
@@ -173,7 +173,7 @@ impl Dance {
         vec
     }
 
-    fn apply_index_swaps(&self, swaps: &Vec<usize>) {
+    fn apply_index_swaps(&mut self, swaps: &Vec<usize>) {
         for (i, j) in swaps.iter().enumerate() {
             self.scratch[*j] = self.vals[i];
         }
@@ -181,6 +181,8 @@ impl Dance {
             self.vals[i] = self.scratch[i];
         }
     }
+
+    fn derive_value_swaps(&self) {}
 }
 
 /// -- Part Two ---
@@ -309,9 +311,8 @@ mod dance_test {
             Move::Exchange(3, 1),
             Move::Spin(3),
         ];
-        let iter = moves.into_iter();
-        let () = iter;
-        direct_application.apply_all(&iter);
+
+        direct_application.apply_all(moves.iter());
 
         let index_swaps = direct_application.derive_index_swaps();
         let mut matrix_application = Dance::new();
