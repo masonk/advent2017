@@ -299,6 +299,8 @@ impl Dance {
 mod dance_test {
     use Dance;
     use Move;
+    use File;
+    use BufReader;
     use get_swaps;
     use Move::*;
     #[test]
@@ -437,6 +439,8 @@ mod dance_test {
     #[test]
     fn direct_application_same_as_matrix() {
         let (index_swaps, value_swaps) = get_swaps();
+        let f = File::open("src/16/data").unwrap();
+        let moves = Move::parse_moves(BufReader::new(f)).collect::<Vec<Move>>();
 
         let mut dance = Dance::new();
         dance.apply_value_swaps(&value_swaps);
@@ -444,6 +448,26 @@ mod dance_test {
 
         let mut direct_dance = Dance::new();
         direct_dance.apply_all(moves.iter());
+
+        assert_eq!(dance.to_string(), direct_dance.to_string());
+    }
+
+    #[test]
+    fn ten_direct_applications_same_as_10_matrix() {
+        let (index_swaps, value_swaps) = get_swaps();
+        let f = File::open("src/16/data").unwrap();
+        let moves = Move::parse_moves(BufReader::new(f)).collect::<Vec<Move>>();
+
+        let mut dance = Dance::new();
+        let mut direct_dance = Dance::new();
+        for _ in 0..10 {
+            dance.apply_value_swaps(&value_swaps);
+            direct_dance.apply_all(moves.iter());
+        }
+
+        for _ in 0..10 {
+            dance.apply_index_swaps(&index_swaps);
+        }
 
         assert_eq!(dance.to_string(), direct_dance.to_string());
     }
@@ -477,25 +501,36 @@ fn part_one() -> String {
 }
 
 fn part_two() -> String {
+    let mut memo: HashMap<String, usize> = HashMap::new();
+    let mut cycle: Vec<String> = vec![];
     let (index_swaps, value_swaps) = get_swaps();
     let mut dance = Dance::new();
-    dance.apply_value_swaps(&value_swaps);
-    dance.apply_index_swaps(&index_swaps);
-    let mut cycle: Vec<String> = vec![];
-    cycle.push(dance.to_string());
-
+    let mut i = 0;
     loop {
         dance.apply_value_swaps(&value_swaps);
         dance.apply_index_swaps(&index_swaps);
-        let d = dance.to_string();
-        if d == cycle[0] {
-            for (i, c) in cycle.iter().enumerate() {
-                println!("{}. {}", i, c);
+        let s = dance.to_string();
+
+        {
+            let exists = memo.get(&s);
+            match exists {
+                Some(i) => {
+                    for (i, c) in cycle.iter().enumerate() {
+                        println!("{}. {}", i, c);
+                    }
+                    println!("Got {}, which exists at cycle index {}", s, i);
+                    let cycle_len = cycle.len() - i;
+                    let cycle_offset = 1e9 as usize % cycle_len;
+                    let final_position = i + cycle_offset;
+                    return cycle[final_position].clone();
+                }
+                _ => {}
             }
-            let idx = 1e9 as usize % cycle.len();
-            return cycle[idx].clone();
         }
-        cycle.push(d);
+
+        memo.insert(s.clone(), i);
+        cycle.push(s.clone());
+        i += 1;
     }
 }
 fn main() {
