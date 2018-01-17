@@ -220,9 +220,10 @@ impl Dance {
     }
 
     fn apply_value_swaps(&mut self, swaps: &Vec<char>) {
+        let chars = Dance::chars();
         for (i, c) in swaps.iter().enumerate() {
             let j = self.vals.iter().position(|v| v == c).unwrap();
-            self.scratch[j] = self.vals[i];
+            self.scratch[j] = chars[i];
         }
         for i in 0..16 {
             self.vals[i] = self.scratch[i];
