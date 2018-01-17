@@ -194,8 +194,8 @@ impl Dance {
         // [c b e d a ...]
         //
         // Our swaps would be
-        //  a b c d e  <- start position
-        // [e b a d c]
+        // (a b c d e)   <- these chars
+        // [e b a d c]  <- go to where these chars were
         // That is, a goes where e was
         // b goes where b was
         // c goes where a was,
@@ -299,6 +299,8 @@ impl Dance {
 mod dance_test {
     use Dance;
     use Move;
+    use get_swaps;
+    use Move::*;
     #[test]
     fn spin() {
         let mut dance = Dance::new();
@@ -380,11 +382,6 @@ mod dance_test {
 
         direct_application.apply_all(moves.iter());
         let value_swaps = direct_application.derive_value_swaps();
-        println!(
-            "Direct application: {}\nValue Swaps: {}",
-            direct_application.to_string(),
-            value_swaps.iter().collect::<String>()
-        );
         let mut matrix_application = Dance::new();
         matrix_application.apply_value_swaps(&value_swaps);
         assert_eq!(
@@ -392,9 +389,116 @@ mod dance_test {
             direct_application.to_string()
         );
     }
+
+    #[test]
+    fn value_swaps_do_same_as_partner_application() {
+        let f = File::open("src/16/data").unwrap();
+        let moves = Move::parse_moves(BufReader::new(f))
+            .filter(|m| match m {
+                &Partner(_, _) => true,
+                _ => false,
+            })
+            .collect::<Vec<Move>>();
+        let mut partner_dance = Dance::new();
+        partner_dance.apply_all(moves.iter());
+        let value_swaps = partner_dance.derive_value_swaps();
+
+        let mut dance = Dance::new();
+        dance.apply_value_swaps(&value_swaps);
+
+        let mut direct_dance = Dance::new();
+        direct_dance.apply_all(moves.iter());
+
+        assert_eq!(dance.to_string(), direct_dance.to_string());
+    }
+
+    #[test]
+    fn index_swaps_same_as_spin_application() {
+        let f = File::open("src/16/data").unwrap();
+        let moves = Move::parse_moves(BufReader::new(f))
+            .filter(|m| match m {
+                &Partner(_, _) => false,
+                _ => true,
+            })
+            .collect::<Vec<Move>>();
+        let mut spin_dance = Dance::new();
+        spin_dance.apply_all(moves.iter());
+        let index_swaps = spin_dance.derive_index_swaps();
+
+        let mut dance = Dance::new();
+        dance.apply_index_swaps(&index_swaps);
+
+        let mut direct_dance = Dance::new();
+        direct_dance.apply_all(moves.iter());
+
+        assert_eq!(dance.to_string(), direct_dance.to_string());
+    }
+
+    #[test]
+    fn direct_application_same_as_matrix() {
+        let (index_swaps, value_swaps) = get_swaps();
+
+        let mut dance = Dance::new();
+        dance.apply_value_swaps(&value_swaps);
+        dance.apply_index_swaps(&index_swaps);
+
+        let mut direct_dance = Dance::new();
+        direct_dance.apply_all(moves.iter());
+
+        assert_eq!(dance.to_string(), direct_dance.to_string());
+    }
 }
 
-fn part_one() {
+fn get_swaps() -> (Vec<usize>, Vec<char>) {
     let f = File::open("src/16/data").unwrap();
-    let moves = Move::parse_moves(BufReader::new(f));
+    let moves = Move::parse_moves(BufReader::new(f)).collect::<Vec<Move>>();
+    let mut spin_dance = Dance::new();
+    spin_dance.apply_all(moves.iter().filter(|&m| match m {
+        &Partner(_, _) => false,
+        _ => true,
+    }));
+
+    let mut partner_dance = Dance::new();
+    partner_dance.apply_all(moves.iter().filter(|&m| match m {
+        &Partner(_, _) => true,
+        _ => false,
+    }));
+    let index_swaps = spin_dance.derive_index_swaps();
+    let value_swaps = partner_dance.derive_value_swaps();
+    (index_swaps, value_swaps)
+}
+fn part_one() -> String {
+    let (index_swaps, value_swaps) = get_swaps();
+    let mut dance = Dance::new();
+    dance.apply_value_swaps(&value_swaps);
+    dance.apply_index_swaps(&index_swaps);
+
+    dance.to_string()
+}
+
+fn part_two() -> String {
+    let (index_swaps, value_swaps) = get_swaps();
+    let mut dance = Dance::new();
+    dance.apply_value_swaps(&value_swaps);
+    dance.apply_index_swaps(&index_swaps);
+    let mut cycle: Vec<String> = vec![];
+    cycle.push(dance.to_string());
+
+    loop {
+        dance.apply_value_swaps(&value_swaps);
+        dance.apply_index_swaps(&index_swaps);
+        let d = dance.to_string();
+        if d == cycle[0] {
+            for (i, c) in cycle.iter().enumerate() {
+                println!("{}. {}", i, c);
+            }
+            let idx = 1e9 as usize % cycle.len();
+            return cycle[idx].clone();
+        }
+        cycle.push(d);
+    }
+}
+fn main() {
+    println!("{}", part_one());
+    println!("{}", part_two());
 }
