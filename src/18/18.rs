@@ -14,12 +14,15 @@
 // jgz X Y jumps with an offset of the value of Y, but only if the value of X is greater than zero. (An offset of 2 skips the next instruction, an offset of -1 jumps to the previous instruction, and so on.)
 // Many of the instructions can take either a register (a single letter) or a number. The value of a register is the integer it contains; the value of a number is that number.
 use std::collections::HashMap;
+use std::fmt;
 type RegAdr = char;
+
+#[derive(Debug, Clone)]
 enum Val {
     Reg(RegAdr),
     Lit(i32),
 }
-
+#[derive(Debug, Clone)]
 enum Inst {
     snd(Val),
     set(RegAdr, Val),
@@ -31,6 +34,8 @@ enum Inst {
 }
 
 use Inst::*;
+
+#[derive(Clone)]
 struct DuetState {
     cursor: usize,
     sound: Option<i32>,
@@ -38,6 +43,15 @@ struct DuetState {
     registers: HashMap<char, i32>,
 }
 
+impl fmt::Debug for DuetState {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "DuetState {{ cursor: {}, sound: {:?}, next_instr: {:?}, registers: {:?} }}",
+            self.cursor, self.sound, self.instrs[self.cursor], self.registers
+        )
+    }
+}
 impl DuetState {
     fn new(instrs: Vec<Inst>) -> Self {
         DuetState {
@@ -69,7 +83,7 @@ impl DuetState {
     fn do_next(&mut self) {
         let inst = &self.instrs[self.cursor];
         let mut jmp = 1;
-
+        println!("Before: {:?}", self);
         match *inst {
             snd(ref v) => {
                 self.sound = Some(self.resolve(v));
@@ -102,7 +116,8 @@ impl DuetState {
                 }
             }
         }
-        self.cursor += jmp as usize;
+        self.cursor = ((self.cursor as i64) + (jmp as i64)) as usize;
+        println!("After: {:?}", self);
     }
 
     fn resolve(&self, val: &Val) -> i32 {
@@ -138,4 +153,28 @@ impl DuetState {
 // Finally, a is set to 1, causing the next jgz instruction to activate, jumping back two instructions to another jump, which jumps again to the rcv, which ultimately triggers the recover operation.
 // At the time the recover operation is executed, the frequency of the last sound played is 4.
 
+#[cfg(test)]
+mod example {
+    use DuetState;
+    use Inst::*;
+    use Val::*;
+    #[test]
+    fn example_computes() {
+        let insts = vec![
+            set('a', Lit(1)),
+            add('a', Lit(2)),
+            mul('a', Reg('a')),
+            mdl('a', Lit(5)),
+            snd(Reg('a')),
+            set('a', Lit(0)),
+            rcv(Reg('a')),
+            jgz(Reg('a'), Lit(-1)),
+            set('a', Lit(1)),
+            jgz(Reg('a'), Lit(-2)),
+        ];
+        let mut duet = DuetState::new(insts);
+        let actual = duet.play_until_recovery();
+        assert_eq!(actual, 4);
+    }
+}
 // What is the value of the recovered frequency (the value of the most recently played sound) the first time a rcv instruction is executed with a non-zero value?
