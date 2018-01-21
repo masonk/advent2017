@@ -1,0 +1,49 @@
+use assembly::Val;
+use assembly::Inst;
+use std::str::FromStr;
+
+grammar;
+
+pub Instruction: Inst = {
+    Snd, Rcv, Add, Set, Mul, Mod, Jgz
+};
+
+Snd: Inst = {
+    r"snd" <Val> => Inst::Snd(<>)
+};
+Rcv: Inst = {
+    r"rcv" <Val> => Inst::Rcv(<>)
+};
+
+Add: Inst = {
+    r"add" <Char> <Val> => Inst::Add(<>)
+};
+Set: Inst = {
+    r"set" <Char> <Val> => Inst::Set(<>)
+};
+Mul: Inst = {
+    r"mul" <Char> <Val> => Inst::Mul(<>)
+};
+Mod: Inst = {
+    r"mod" <Char> <Val> => Inst::Mod(<>)
+};
+
+Jgz: Inst = {
+    r"jgz" <Val> <Val> => Inst::Jgz(<>)
+};
+
+Val: Val = {
+    Addr,
+    Lit
+};
+
+Lit: Val = {
+    Num => Val::Lit(<>)
+};
+
+Addr: Val = {
+    Char => Val::Addr(<>)
+};
+
+Num: i32 = r"-?[0-9]+" => i32::from_str(<>).unwrap();
+Char: char = <s:r"[a-z]"> => s.chars().nth(0).unwrap();

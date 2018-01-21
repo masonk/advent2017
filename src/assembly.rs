@@ -18,12 +18,12 @@ use std::collections::HashMap;
 use std::fmt;
 
 type RegAdr = char;
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Val {
     Addr(RegAdr),
     Lit(i32),
 }
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Inst {
     Snd(Val),
     Set(RegAdr, Val),
@@ -179,4 +179,5 @@ mod example {
         assert_eq!(actual, 4);
     }
 }
+
 // What is the value of the recovered frequency (the value of the most recently played sound) the first time a rcv instruction is executed with a non-zero value?

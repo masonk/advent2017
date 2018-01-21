@@ -1,13 +1,12 @@
-extern crate advent2017;
-use advent2017::assembly;
-
 #[test]
 fn test_assembly_vm() {
     #[cfg(test)]
     mod example {
-        use super::assembly::DuetState;
-        use super::assembly::Inst::*;
-        use super::assembly::Val::*;
+        extern crate advent2017 as lib;
+        use self::lib::assembly;
+        use self::assembly::DuetState;
+        use self::assembly::Inst::*;
+        use self::assembly::Val::*;
         #[test]
         fn example_computes() {
             let insts = vec![
@@ -25,6 +24,39 @@ fn test_assembly_vm() {
             let mut duet = DuetState::new(insts);
             let actual = duet.play_until_recovery();
             assert_eq!(actual, 4);
+        }
+    }
+}
+#[cfg(test)]
+mod test_parser {
+    extern crate advent2017 as lib;
+    use self::lib::assembly;
+    use self::lib::assembly_instructions as parser;
+    use self::assembly::DuetState;
+    use self::assembly::Inst::*;
+    use self::assembly::Val::*;
+
+    #[test]
+    fn parse_example() {
+        let texts = vec![
+            "set a 1", "add a 2", "mul a a", "mod a 5", "snd a", "set a 0", "rcv a", "jgz a -1",
+            "set a 1", "jgz a -2",
+        ];
+        let parses = vec![
+            Set('a', Lit(1)),
+            Add('a', Lit(2)),
+            Mul('a', Addr('a')),
+            Mod('a', Lit(5)),
+            Snd(Addr('a')),
+            Set('a', Lit(0)),
+            Rcv(Addr('a')),
+            Jgz(Addr('a'), Lit(-1)),
+            Set('a', Lit(1)),
+            Jgz(Addr('a'), Lit(-2)),
+        ];
+        for (text, expected) in texts.iter().zip(parses) {
+            let actual = parser::parse_Instruction(text);
+            assert_eq!(actual.unwrap(), expected);
         }
     }
 }
