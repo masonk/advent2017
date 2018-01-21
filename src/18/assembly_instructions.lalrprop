@@ -1,4 +1,3 @@
-
 use advent2017::advent18::Val;
 use advent2017::advent18::Inst;
 use std::str::FromStr;

@@ -15,25 +15,37 @@
 // Many of the instructions can take either a register (a single letter) or a number. The value of a register is the integer it contains; the value of a number is that number.
 use std::collections::HashMap;
 use std::fmt;
-type RegAdr = char;
 
+// pub mod assembly_instructions;
+// #[test]
+// fn calculator1() {
+//     let lit = assembly_instructions::parse_Instruction("snd 1");
+//     assert!(lit.is_ok());
+//     assert_eq!(lit.unwrap(), Snd(Lit(1)));
+//     let addr = assembly_instructions::parse_Instruction("snd a");
+//     assert!(addr.is_ok());
+//     assert!(addr, Snd(Addr('a')));
+// }
+
+type RegAdr = char;
 #[derive(Debug, Clone)]
 enum Val {
-    Reg(RegAdr),
+    Addr(RegAdr),
     Lit(i32),
 }
 #[derive(Debug, Clone)]
 enum Inst {
-    snd(Val),
-    set(RegAdr, Val),
-    add(RegAdr, Val),
-    mul(RegAdr, Val),
-    mdl(RegAdr, Val),
-    rcv(Val),
-    jgz(Val, Val),
+    Snd(Val),
+    Set(RegAdr, Val),
+    Add(RegAdr, Val),
+    Mul(RegAdr, Val),
+    Mod(RegAdr, Val),
+    Rcv(Val),
+    Jgz(Val, Val),
 }
 
 use Inst::*;
+use Val::*;
 
 #[derive(Clone)]
 struct DuetState {
@@ -68,7 +80,7 @@ impl DuetState {
             }
             {
                 let inst = &self.instrs[self.cursor];
-                if let &rcv(ref v) = inst {
+                if let &Rcv(ref v) = inst {
                     if self.resolve(v) != 0 {
                         // presumably, if there's no sound at the end of the sequence, that's a code error
                         // (Because they did not define that behavior in the problem statement)
@@ -85,32 +97,32 @@ impl DuetState {
         let mut jmp = 1;
         println!("Before: {:?}", self);
         match *inst {
-            snd(ref v) => {
+            Snd(ref v) => {
                 self.sound = Some(self.resolve(v));
             }
-            set(addr, ref v) => {
+            Set(addr, ref v) => {
                 let val = self.resolve(v);
                 self.registers.insert(addr, val);
             }
-            add(addr, ref v) => {
+            Add(addr, ref v) => {
                 let val = self.resolve(v);
                 let mut entry = self.registers.entry(addr).or_insert(0);
                 *entry += val;
             }
-            mul(addr, ref v) => {
+            Mul(addr, ref v) => {
                 let val = self.resolve(v);
                 let mut entry = self.registers.entry(addr).or_insert(0);
                 *entry *= val;
             }
-            mdl(addr, ref v) => {
+            Mod(addr, ref v) => {
                 let val = self.resolve(v);
                 let mut reg = self.registers.entry(addr).or_insert(0);
                 *reg = *reg % val;
             }
-            rcv(ref v) => {
+            Rcv(ref v) => {
                 // Don't know what "recovering" a sound is supposed to do. Maybe part 2.
             }
-            jgz(ref x, ref y) => {
+            Jgz(ref x, ref y) => {
                 if self.resolve(x) > 0 {
                     jmp = self.resolve(y);
                 }
@@ -123,7 +135,7 @@ impl DuetState {
     fn resolve(&self, val: &Val) -> i32 {
         match val {
             &Val::Lit(v) => v,
-            &Val::Reg(ref addr) => {
+            &Val::Addr(ref addr) => {
                 if let Some(v) = self.registers.get(addr) {
                     *v
                 } else {
@@ -161,16 +173,16 @@ mod example {
     #[test]
     fn example_computes() {
         let insts = vec![
-            set('a', Lit(1)),
-            add('a', Lit(2)),
-            mul('a', Reg('a')),
-            mdl('a', Lit(5)),
-            snd(Reg('a')),
-            set('a', Lit(0)),
-            rcv(Reg('a')),
-            jgz(Reg('a'), Lit(-1)),
-            set('a', Lit(1)),
-            jgz(Reg('a'), Lit(-2)),
+            Set('a', Lit(1)),
+            Add('a', Lit(2)),
+            Mul('a', Addr('a')),
+            Mod('a', Lit(5)),
+            Snd(Addr('a')),
+            Set('a', Lit(0)),
+            Rcv(Addr('a')),
+            Jgz(Addr('a'), Lit(-1)),
+            Set('a', Lit(1)),
+            Jgz(Addr('a'), Lit(-2)),
         ];
         let mut duet = DuetState::new(insts);
         let actual = duet.play_until_recovery();
