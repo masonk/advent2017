@@ -45,5 +45,5 @@ Addr: Val = {
     Char => Val::Addr(<>)
 };
 
-Num: i32 = r"-?[0-9]+" => i32::from_str(<>).unwrap();
+Num: i64 = r"-?[0-9]+" => i64::from_str(<>).unwrap();
 Char: char = <s:r"[a-z]"> => s.chars().nth(0).unwrap();

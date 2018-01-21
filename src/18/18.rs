@@ -60,14 +60,30 @@ mod test_parser {
         }
     }
 }
-// pub mod assembly_instructions;
 
-// #[test]
-// fn test_assembly_parse() {
-//     let lit = assembly_instructions::parse_Instruction("snd 1");
-//     assert!(lit.is_ok());
-//     assert_eq!(lit.unwrap(), Snd(Lit(1)));
-//     let addr = assembly_instructions::parse_Instruction("snd a");
-//     assert!(addr.is_ok());
-//     assert!(addr, Snd(Addr('a')));
-// }
+use std::fs::File;
+use std::io::{BufRead, BufReader};
+
+extern crate advent2017 as lib;
+use self::lib::assembly;
+use self::lib::assembly_instructions as parser;
+use self::assembly::DuetState;
+use self::assembly::Inst;
+use self::Inst::*;
+
+fn part_one() -> i64 {
+    let mut f = File::open("src/18/data").unwrap();
+    let mut r = BufReader::new(f);
+    let inst_texts = r.lines().map(|r| r.unwrap()).collect::<Vec<String>>();
+    let insts = inst_texts
+        .iter()
+        .map(|ref l| parser::parse_Instruction(l))
+        .map(|r| r.unwrap())
+        .collect::<Vec<Inst>>();
+    let mut duet = DuetState::new(insts);
+    duet.play_until_recovery()
+}
+
+fn main() {
+    println!("18-1: {}", part_one());
+}

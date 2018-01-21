@@ -29,7 +29,7 @@ mod __parse__Instruction {
         NtLit(Val),
         NtMod(Inst),
         NtMul(Inst),
-        NtNum(i32),
+        NtNum(i64),
         NtRcv(Inst),
         NtSet(Inst),
         NtSnd(Inst),
@@ -780,7 +780,7 @@ mod __parse__Instruction {
       'input,
     >(
         __symbols: &mut ::std::vec::Vec<(usize,__Symbol<'input>,usize)>
-    ) -> (usize, i32, usize) {
+    ) -> (usize, i64, usize) {
         match __symbols.pop().unwrap() {
             (__l, __Symbol::NtNum(__v), __r) => (__l, __v, __r),
             _ => panic!("symbol type mismatch")
@@ -1132,7 +1132,7 @@ fn __action17<
     'input,
 >(
     input: &'input str,
-    (_, __0, _): (usize, i32, usize),
+    (_, __0, _): (usize, i64, usize),
 ) -> Val
 {
     Val::Lit(__0)
@@ -1155,9 +1155,9 @@ fn __action19<
 >(
     input: &'input str,
     (_, __0, _): (usize, &'input str, usize),
-) -> i32
+) -> i64
 {
-    i32::from_str(__0).unwrap()
+    i64::from_str(__0).unwrap()
 }
 
 #[allow(unused_variables)]

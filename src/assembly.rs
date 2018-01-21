@@ -18,10 +18,11 @@ use std::collections::HashMap;
 use std::fmt;
 
 type RegAdr = char;
+type RegisterSize = i64;
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Val {
     Addr(RegAdr),
-    Lit(i32),
+    Lit(RegisterSize),
 }
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Inst {
@@ -40,9 +41,9 @@ use self::Val::*;
 #[derive(Clone)]
 pub struct DuetState {
     cursor: usize,
-    sound: Option<i32>,
+    sound: Option<RegisterSize>,
     instrs: Vec<Inst>,
-    registers: HashMap<char, i32>,
+    registers: HashMap<char, RegisterSize>,
 }
 
 impl fmt::Debug for DuetState {
@@ -63,7 +64,7 @@ impl DuetState {
             registers: HashMap::new(),
         }
     }
-    pub fn play_until_recovery(&mut self) -> i32 {
+    pub fn play_until_recovery(&mut self) -> RegisterSize {
         loop {
             if self.cursor > self.instrs.len() {
                 break;
@@ -119,10 +120,10 @@ impl DuetState {
             }
         }
         self.cursor = ((self.cursor as i64) + (jmp as i64)) as usize;
-        println!("After: {:?}", self);
+        // println!("After: {:?}", self);
     }
 
-    fn resolve(&self, val: &Val) -> i32 {
+    fn resolve(&self, val: &Val) -> RegisterSize {
         match val {
             &Val::Lit(v) => v,
             &Val::Addr(ref addr) => {
@@ -136,48 +137,5 @@ impl DuetState {
     }
 }
 // After each jump instruction, the program continues with the instruction to which the jump jumped. After any other instruction, the program continues with the next instruction. Continuing (or jumping) off either end of the program terminates it.
-
-// For example:
-
-// set a 1
-// add a 2
-// mul a a
-// mod a 5
-// snd a
-// set a 0
-// rcv a
-// jgz a -1
-// set a 1
-// jgz a -2
-// The first four instructions set a to 1, add 2 to it, square it, and then set it to itself modulo 5, resulting in a value of 4.
-// Then, a sound with frequency 4 (the value of a) is played.
-// After that, a is set to 0, causing the subsequent rcv and jgz instructions to both be skipped (rcv because a is 0, and jgz because a is not greater than 0).
-// Finally, a is set to 1, causing the next jgz instruction to activate, jumping back two instructions to another jump, which jumps again to the rcv, which ultimately triggers the recover operation.
-// At the time the recover operation is executed, the frequency of the last sound played is 4.
-
-#[cfg(test)]
-mod example {
-    use super::DuetState;
-    use super::Inst::*;
-    use super::Val::*;
-    #[test]
-    fn example_computes() {
-        let insts = vec![
-            Set('a', Lit(1)),
-            Add('a', Lit(2)),
-            Mul('a', Addr('a')),
-            Mod('a', Lit(5)),
-            Snd(Addr('a')),
-            Set('a', Lit(0)),
-            Rcv(Addr('a')),
-            Jgz(Addr('a'), Lit(-1)),
-            Set('a', Lit(1)),
-            Jgz(Addr('a'), Lit(-2)),
-        ];
-        let mut duet = DuetState::new(insts);
-        let actual = duet.play_until_recovery();
-        assert_eq!(actual, 4);
-    }
-}
 
 // What is the value of the recovered frequency (the value of the most recently played sound) the first time a rcv instruction is executed with a non-zero value?

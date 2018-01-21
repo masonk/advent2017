@@ -1,0 +1,552 @@
+Lalrpop Report File
+========================================
+
+Summary
+----------------------------------------
+
+Constructed 34 states
+
+State Table
+----------------------------------------
+
+State 0 {
+
+    Add           -> . r#"add"# Char Val
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+    Instruction   -> . Add
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+    Instruction   -> . Jgz
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+    Instruction   -> . Mod
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+    Instruction   -> . Mul
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+    Instruction   -> . Rcv
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+    Instruction   -> . Set
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+    Instruction   -> . Snd
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+    Jgz           -> . r#"jgz"# Val Val
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+    Mod           -> . r#"mod"# Char Val
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+    Mul           -> . r#"mul"# Char Val
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+    Rcv           -> . r#"rcv"# Val
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+    Set           -> . r#"set"# Char Val
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+    Snd           -> . r#"snd"# Val
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+    __Instruction -> . Instruction
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+    r#"add"#    shift and goto 9
+    r#"jgz"#    shift and goto 10
+    r#"mod"#    shift and goto 11
+    r#"mul"#    shift and goto 12
+    r#"rcv"#    shift and goto 13
+    r#"set"#    shift and goto 14
+    r#"snd"#    shift and goto 15
+
+    Add         goto 1
+    Instruction goto 2
+    Jgz         goto 3
+    Mod         goto 4
+    Mul         goto 5
+    Rcv         goto 6
+    Set         goto 7
+    Snd         goto 8
+}
+
+State 1 {
+
+    Instruction -> Add .
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+
+    reduction Instruction -> Add
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+
+}
+
+State 2 {
+
+    __Instruction -> Instruction .
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+
+    reduction __Instruction -> Instruction
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+
+}
+
+State 3 {
+
+    Instruction -> Jgz .
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+
+    reduction Instruction -> Jgz
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+
+}
+
+State 4 {
+
+    Instruction -> Mod .
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+
+    reduction Instruction -> Mod
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+
+}
+
+State 5 {
+
+    Instruction -> Mul .
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+
+    reduction Instruction -> Mul
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+
+}
+
+State 6 {
+
+    Instruction -> Rcv .
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+
+    reduction Instruction -> Rcv
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+
+}
+
+State 7 {
+
+    Instruction -> Set .
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+
+    reduction Instruction -> Set
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+
+}
+
+State 8 {
+
+    Instruction -> Snd .
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+
+    reduction Instruction -> Snd
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+
+}
+
+State 9 {
+
+    Add  -> r#"add"# . Char Val
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+    Char -> . r#"[a-z]"#
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+    r#"[a-z]"# shift and goto 17
+
+    Char       goto 16
+}
+
+State 10 {
+
+    Addr -> . Char
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+    Char -> . r#"[a-z]"#
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+    Jgz  -> r#"jgz"# . Val Val
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+    Val  -> . Addr Lit
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+    r#"[a-z]"# shift and goto 17
+
+    Addr       goto 18
+    Char       goto 19
+    Val        goto 20
+}
+
+State 11 {
+
+    Char -> . r#"[a-z]"#
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+    Mod  -> r#"mod"# . Char Val
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+    r#"[a-z]"# shift and goto 17
+
+    Char       goto 21
+}
+
+State 12 {
+
+    Char -> . r#"[a-z]"#
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+    Mul  -> r#"mul"# . Char Val
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+    r#"[a-z]"# shift and goto 17
+
+    Char       goto 22
+}
+
+State 13 {
+
+    Addr -> . Char
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+    Char -> . r#"[a-z]"#
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+    Rcv  -> r#"rcv"# . Val
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+    Val  -> . Addr Lit
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+    r#"[a-z]"# shift and goto 17
+
+    Addr       goto 18
+    Char       goto 19
+    Val        goto 23
+}
+
+State 14 {
+
+    Char -> . r#"[a-z]"#
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+    Set  -> r#"set"# . Char Val
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+    r#"[a-z]"# shift and goto 17
+
+    Char       goto 24
+}
+
+State 15 {
+
+    Addr -> . Char
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+    Char -> . r#"[a-z]"#
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+    Snd  -> r#"snd"# . Val
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+    Val  -> . Addr Lit
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+    r#"[a-z]"# shift and goto 17
+
+    Addr       goto 18
+    Char       goto 19
+    Val        goto 25
+}
+
+State 16 {
+
+    Add  -> r#"add"# Char . Val
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+    Addr -> . Char
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+    Char -> . r#"[a-z]"#
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+    Val  -> . Addr Lit
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+    r#"[a-z]"# shift and goto 17
+
+    Addr       goto 18
+    Char       goto 19
+    Val        goto 26
+}
+
+State 17 {
+
+    Char -> r#"[a-z]"# .
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+
+    reduction Char -> r#"[a-z]"#
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+
+}
+
+State 18 {
+
+    Lit -> . Num
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+    Num -> . r#"-?[0-9]+"#
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+    Val -> Addr . Lit
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+    r#"-?[0-9]+"# shift and goto 29
+
+    Lit           goto 27
+    Num           goto 28
+}
+
+State 19 {
+
+    Addr -> Char .
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+
+    reduction Addr -> Char
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+
+}
+
+State 20 {
+
+    Addr -> . Char
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+    Char -> . r#"[a-z]"#
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+    Jgz  -> r#"jgz"# Val . Val
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+    Val  -> . Addr Lit
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+    r#"[a-z]"# shift and goto 17
+
+    Addr       goto 18
+    Char       goto 19
+    Val        goto 30
+}
+
+State 21 {
+
+    Addr -> . Char
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+    Char -> . r#"[a-z]"#
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+    Mod  -> r#"mod"# Char . Val
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+    Val  -> . Addr Lit
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+    r#"[a-z]"# shift and goto 17
+
+    Addr       goto 18
+    Char       goto 19
+    Val        goto 31
+}
+
+State 22 {
+
+    Addr -> . Char
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+    Char -> . r#"[a-z]"#
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+    Mul  -> r#"mul"# Char . Val
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+    Val  -> . Addr Lit
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+    r#"[a-z]"# shift and goto 17
+
+    Addr       goto 18
+    Char       goto 19
+    Val        goto 32
+}
+
+State 23 {
+
+    Rcv -> r#"rcv"# Val .
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+
+    reduction Rcv -> r#"rcv"# Val
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+
+}
+
+State 24 {
+
+    Addr -> . Char
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+    Char -> . r#"[a-z]"#
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+    Set  -> r#"set"# Char . Val
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+    Val  -> . Addr Lit
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+    r#"[a-z]"# shift and goto 17
+
+    Addr       goto 18
+    Char       goto 19
+    Val        goto 33
+}
+
+State 25 {
+
+    Snd -> r#"snd"# Val .
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+
+    reduction Snd -> r#"snd"# Val
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+
+}
+
+State 26 {
+
+    Add -> r#"add"# Char Val .
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+
+    reduction Add -> r#"add"# Char Val
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+
+}
+
+State 27 {
+
+    Val -> Addr Lit .
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+
+    reduction Val -> Addr Lit
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+
+}
+
+State 28 {
+
+    Lit -> Num .
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+
+    reduction Lit -> Num
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+
+}
+
+State 29 {
+
+    Num -> r#"-?[0-9]+"# .
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+
+    reduction Num -> r#"-?[0-9]+"#
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+
+}
+
+State 30 {
+
+    Jgz -> r#"jgz"# Val Val .
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+
+    reduction Jgz -> r#"jgz"# Val Val
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+
+}
+
+State 31 {
+
+    Mod -> r#"mod"# Char Val .
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+
+    reduction Mod -> r#"mod"# Char Val
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+
+}
+
+State 32 {
+
+    Mul -> r#"mul"# Char Val .
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+
+    reduction Mul -> r#"mul"# Char Val
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+
+}
+
+State 33 {
+
+    Set -> r#"set"# Char Val .
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+
+    reduction Set -> r#"set"# Char Val
+        lookahead r#"-?[0-9]+"# r#"[a-z]"# r#"add"# r#"jgz"# r#"mod"# r#"mul"# r#"rcv"# r#"set"# r#"snd"# EOF
+
+
+}
