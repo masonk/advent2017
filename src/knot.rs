@@ -43,7 +43,7 @@
 
 // However, you should instead use the standard list size of 256 (with values 0 to 255) and the sequence of lengths in your puzzle input. Once this process is complete, what is the result of multiplying the first two numbers in the list?
 use std::fmt;
-use std::io::{BufRead, BufReader};
+use std::io::BufReader;
 use std::fs::File;
 use std::io::Seek;
 use std::io::SeekFrom;
@@ -117,7 +117,7 @@ impl Knot {
     pub fn hash<T: Seek + Read>(&mut self, mut f: T) -> String {
         let mut buf = [0 as u8; 1];
         for _ in 0..64 {
-            f.seek(SeekFrom::Start(0));
+            f.seek(SeekFrom::Start(0)).unwrap();
             while let Ok(n) = f.read(&mut buf) {
                 if n == 0 {
                     break;
@@ -190,7 +190,6 @@ pub fn part_one() {
     let mut reader = BufReader::new(&input);
     let mut knot = Knot::new();
     let mut line = String::new();
-    let inputs = reader.read_line(&mut line);
 
     let nums = line.split(",")
         .map(|l| l.parse::<u32>().unwrap())
