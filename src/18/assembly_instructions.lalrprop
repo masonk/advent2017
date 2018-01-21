@@ -1,27 +1,27 @@
-use advent2017::advent18::Val;
-use advent2017::advent18::Inst;
+use advent::assembly::Val;
+use advent::assembly::Inst;
 use std::str::FromStr;
 
 grammar;
 
-pub Instruction: Inst {
+pub Instruction: Inst = {
     <s:Snd> => s,
-}
+};
 
 Snd: Inst::Snd = {
     r"snd\s+" <v: Val> => Inst::Snd(v)
-}
+};
 
-Val: Val = { Lit, Addr }
+Val: Val = { Lit, Addr };
 
-Lit: Val::Lit = {
+Lit: Val = {
     <n:Num> => Val::Lit(n),
-}
+};
 
-Addr: Val::Addr = {
+Addr: Val = {
     <c:Char> => Val::Reg(s);
-}
+};
 
-Num: i32 = r"-?[0-9]+" => i32::from_str(<>).unwrap();
+Num: i32 = <s:r"-?[0-9]+"> => i32::from_str(s).unwrap();
 Char: char = <s:r"[a-z]"> => s[0];
 
