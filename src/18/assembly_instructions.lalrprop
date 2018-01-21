@@ -9,7 +9,7 @@ pub Instruction: Inst {
 }
 
 Snd: Inst::Snd = {
-    "snd\s+" <v: Val> => Inst::Snd(v)
+    r"snd\s+" <v: Val> => Inst::Snd(v)
 }
 
 Val: Val = { Lit, Addr }

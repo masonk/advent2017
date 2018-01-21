@@ -14,16 +14,6 @@
 // jgz X Y jumps with an offset of the value of Y, but only if the value of X is greater than zero. (An offset of 2 skips the next instruction, an offset of -1 jumps to the previous instruction, and so on.)
 // Many of the instructions can take either a register (a single letter) or a number. The value of a register is the integer it contains; the value of a number is that number.
 
-// pub mod assembly_instructions;
-// #[test]
-// fn calculator1() {
-//     let lit = assembly_instructions::parse_Instruction("snd 1");
-//     assert!(lit.is_ok());
-//     assert_eq!(lit.unwrap(), Snd(Lit(1)));
-//     let addr = assembly_instructions::parse_Instruction("snd a");
-//     assert!(addr.is_ok());
-//     assert!(addr, Snd(Addr('a')));
-// }
 pub mod advent18 {
     use std::collections::HashMap;
     use std::fmt;
@@ -191,5 +181,15 @@ pub mod advent18 {
         }
     }
     // What is the value of the recovered frequency (the value of the most recently played sound) the first time a rcv instruction is executed with a non-zero value?
+}
 
+pub mod assembly_instructions;
+#[test]
+fn test_assembly_parse() {
+    let lit = assembly_instructions::parse_Instruction("snd 1");
+    assert!(lit.is_ok());
+    assert_eq!(lit.unwrap(), Snd(Lit(1)));
+    let addr = assembly_instructions::parse_Instruction("snd a");
+    assert!(addr.is_ok());
+    assert!(addr, Snd(Addr('a')));
 }
