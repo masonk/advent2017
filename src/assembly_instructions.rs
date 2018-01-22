@@ -64,7 +64,7 @@ mod __parse__Instruction {
         // State 12
         0, 18, 0, 0, 0, 0, 0, 0, 0,
         // State 13
-        24, 18, 0, 0, 0, 0, 0, 0, 0,
+        0, 18, 0, 0, 0, 0, 0, 0, 0,
         // State 14
         0, 18, 0, 0, 0, 0, 0, 0, 0,
         // State 15
@@ -170,7 +170,7 @@ mod __parse__Instruction {
         // State 12
         0, 0, 26, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         // State 13
-        0, 19, 20, 0, 0, 21, 0, 0, 22, 0, 0, 0, 27, 0,
+        0, 0, 27, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         // State 14
         0, 0, 28, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         // State 15
@@ -533,8 +533,8 @@ mod __parse__Instruction {
                 8
             }
             16 => {
-                // Rcv = r#"rcv"#, Val => ActionFn(9);
-                let __sym1 = __pop_NtVal(__symbols);
+                // Rcv = r#"rcv"#, Char => ActionFn(9);
+                let __sym1 = __pop_NtChar(__symbols);
                 let __sym0 = __pop_Termr_23_22rcv_22_23(__symbols);
                 let __start = __sym0.0.clone();
                 let __end = __sym1.2.clone();
@@ -1034,7 +1034,7 @@ fn __action9<
 >(
     input: &'input str,
     (_, _, _): (usize, &'input str, usize),
-    (_, __0, _): (usize, Val, usize),
+    (_, __0, _): (usize, char, usize),
 ) -> Inst
 {
     Inst::Rcv(__0)

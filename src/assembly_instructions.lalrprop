@@ -12,7 +12,7 @@ Snd: Inst = {
     r"snd" <Val> => Inst::Snd(<>)
 };
 Rcv: Inst = {
-    r"rcv" <Val> => Inst::Rcv(<>)
+    r"rcv" <Char> => Inst::Rcv(<>)
 };
 
 Add: Inst = {

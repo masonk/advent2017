@@ -69,9 +69,9 @@ use self::lib::assembly;
 use self::lib::assembly_instructions as parser;
 use self::assembly::DuetState;
 use self::assembly::Inst;
-use self::Inst::*;
+use self::assembly::DuetPair;
 
-fn part_one() -> i64 {
+fn get_instructions() -> Vec<Inst> {
     let mut f = File::open("src/18/data").unwrap();
     let mut r = BufReader::new(f);
     let inst_texts = r.lines().map(|r| r.unwrap()).collect::<Vec<String>>();
@@ -80,10 +80,18 @@ fn part_one() -> i64 {
         .map(|ref l| parser::parse_Instruction(l))
         .map(|r| r.unwrap())
         .collect::<Vec<Inst>>();
-    let mut duet = DuetState::new(insts);
+    insts
+}
+fn part_one() -> i64 {
+    let mut duet = DuetState::new(get_instructions());
     duet.play_until_recovery()
+}
+
+fn part_two() -> usize {
+    DuetPair::play(get_instructions())
 }
 
 fn main() {
     println!("18-1: {}", part_one());
+    println!("18-2: {}", part_two());
 }
