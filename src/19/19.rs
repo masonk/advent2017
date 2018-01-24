@@ -131,13 +131,13 @@ impl Tracker {
             }
         }
     }
-    fn track(&mut self) -> Vec<char> {
+    fn track(&mut self) -> (Vec<char>, usize) {
         self.j = self.map[0].iter().position(|&c| c == '|').unwrap();
         let mut letters = vec![];
-
+        let mut count = 0;
         loop {
             let c = self.map[self.i][self.j];
-
+            count += 1;
             match c {
                 '|' | '-' => {}
                 '+' => {
@@ -150,7 +150,7 @@ impl Tracker {
             }
             match self.dir {
                 Term => {
-                    return letters;
+                    return (letters, count);
                 }
                 _ => self.next(),
             }
@@ -160,6 +160,7 @@ impl Tracker {
 
 fn main() {
     let mut tracker = Tracker::new(parse_input("src/19/data"));
-    let letters = tracker.track();
+    let (letters, count) = tracker.track();
     println!("{}", letters.into_iter().collect::<String>());
+    println!("{} steps", count);
 }
