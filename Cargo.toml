@@ -109,8 +109,8 @@ name = "advent19"
 path = "src/19/19.rs"
 
 [[bin]]
-name = "fizzbuzz"
-path = "src/fizzbuzz.rs"
+name = "advent20"
+path = "src/20/20.rs"
 
 [dependencies]
 itertools = "0.7.4"

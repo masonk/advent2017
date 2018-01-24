@@ -1,0 +1,16 @@
+use particles::Vec3;
+use particles::Particle3;
+use std::str::FromStr;
+
+grammar;
+
+pub Particle: Particle3 = {
+    <Vec3> r"," <Vec3> r"," <Vec3> => Particle3::new(<>)
+};
+
+pub Vec3: Vec3 = {
+    Char r"=<" <Num> r"," <Num> r"," <Num> r">" => Vec3::new(<>)
+};
+
+Num: i64 = r"-?[0-9]+" => i64::from_str(<>).unwrap();
+Char: char = <s:r"[a-z]"> => s.chars().nth(0).unwrap();
